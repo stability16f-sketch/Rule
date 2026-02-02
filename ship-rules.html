@@ -495,16 +495,24 @@
                             <label for="blu">BLU</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="scrubber" name="notation" value="scrubber">
-                            <label for="scrubber">SCRUBBER (스크러버)</label>
+                            <input type="checkbox" id="lngready" name="notation" value="lngready">
+                            <label for="lngready">LNG Ready</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="lngfuel" name="notation" value="lngfuel">
-                            <label for="lngfuel">LNG FUEL (LNG연료)</label>
+                            <input type="checkbox" id="ammoniaready" name="notation" value="ammoniaready">
+                            <label for="ammoniaready">Ammonia Ready</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="esp" name="notation" value="esp">
-                            <label for="esp">ESP (강화검사)</label>
+                            <input type="checkbox" id="ethanolready" name="notation" value="ethanolready">
+                            <label for="ethanolready">Ethanol Ready</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="ers" name="notation" value="ers">
+                            <label for="ers">ERS</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="nbs" name="notation" value="nbs">
+                            <label for="nbs">NBS</label>
                         </div>
                     </div>
                 </div>
@@ -791,12 +799,12 @@
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
             'SFV Protocol': '어선 안전을 위한 토레몰리노스 의정서 (Torremolinos Protocol for Safety of Fishing Vessels)',
-            '지침 3편 부록 3-1': 'BLU 관련 선박 검사 지침',
-            'SCRUBBER 규칙': '황산화물(SOx) 배출 저감 장치 설치 및 운영 기준',
-            'MARPOL Annex VI': '선박으로부터의 대기오염 방지 규칙',
-            'LNG Fuel 규칙': 'LNG 연료 추진 선박의 설계 및 안전 요구사항',
-            'IGF Code': '가스 및 저인화점 연료 사용 선박 국제 안전 규칙',
-            'ESP 규칙': '선체 및 기관 강화 검사 프로그램 요구사항'
+            'BLU 관련 지침': '지침 3편 부록 3-1',
+            'LNG Ready': 'LNG 연료 전환 준비 선박 요구사항',
+            'Ammonia Ready': '암모니아 연료 전환 준비 선박 요구사항',
+            'Ethanol Ready': '에탄올 연료 전환 준비 선박 요구사항',
+            'ERS Code': '비상예인장치 요구사항 (Emergency Response Service)',
+            'NBS Code': '선박 소음 저감 규칙 (Noise and Vibration)'
         };
 
         // 선급부호에 따른 추가 규칙을 반환하는 함수
@@ -819,17 +827,22 @@
                 additionalRules.push('SFV Protocol');
             }
             if (notations.includes('blu')) {
-                additionalRules.push('지침 3편 부록 3-1');
+                additionalRules.push('BLU 관련 지침');
             }
-
-            if (notations.includes('scrubber')) {
-                additionalRules.push('SCRUBBER 규칙', 'MARPOL Annex VI');
+            if (notations.includes('lngready')) {
+                additionalRules.push('LNG Ready');
             }
-            if (notations.includes('lngfuel')) {
-                additionalRules.push('LNG Fuel 규칙', 'IGF Code');
+            if (notations.includes('ammoniaready')) {
+                additionalRules.push('Ammonia Ready');
             }
-            if (notations.includes('esp')) {
-                additionalRules.push('ESP 규칙');
+            if (notations.includes('ethanolready')) {
+                additionalRules.push('Ethanol Ready');
+            }
+            if (notations.includes('ers')) {
+                additionalRules.push('ERS Code');
+            }
+            if (notations.includes('nbs')) {
+                additionalRules.push('NBS Code');
             }
 
             return additionalRules;
@@ -881,9 +894,11 @@
                         'ip': 'IP',
                         'sfv': 'SFV',
                         'blu': 'BLU',
-                        'scrubber': 'SCRUBBER',
-                        'lngfuel': 'LNG FUEL',
-                        'esp': 'ESP'
+                        'lngready': 'LNG Ready',
+                        'ammoniaready': 'Ammonia Ready',
+                        'ethanolready': 'Ethanol Ready',
+                        'ers': 'ERS',
+                        'nbs': 'NBS'
                     };
                     notations.forEach(notation => {
                         html += `<span class="badge" style="background: #059669;">${notationNames[notation]}</span>`;
