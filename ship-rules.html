@@ -363,6 +363,46 @@
             margin-right: 5px;
             margin-bottom: 5px;
         }
+
+        /* 탭 스타일 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -379,7 +419,15 @@
         </div>
 
         <div class="card">
-            <form id="shipForm">
+            <!-- 탭 네비게이션 -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('rules')">🔍 규칙 검색</button>
+                <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
+            </div>
+
+            <!-- 규칙 검색 탭 -->
+            <div id="rulesTab" class="tab-content active">
+                <form id="shipForm">
                 <div class="form-group">
                     <label for="nationality">국적</label>
                     <select id="nationality" required>
@@ -469,12 +517,13 @@
                 <div id="resultContent"></div>
             </div>
 
-            <button id="pdfBtn" class="pdf-btn" onclick="downloadPDF()">
-                🖨️ PDF로 저장 (인쇄)
-            </button>
+                <button id="pdfBtn" class="pdf-btn" onclick="downloadPDF()">
+                    🖨️ PDF로 저장 (인쇄)
+                </button>
+            </div>
 
-            <!-- 보간 계산기 섹션 -->
-            <div class="card" style="margin-top: 30px;">
+            <!-- 보간 계산기 탭 -->
+            <div id="interpolationTab" class="tab-content">
                 <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📈 Cubic Spline 보간 계산기</h2>
 
                 <div class="form-group">
@@ -507,6 +556,26 @@
     </div>
 
     <script>
+        // 탭 전환 함수
+        function switchTab(tabName) {
+            // 모든 탭 버튼과 컨텐츠의 active 클래스 제거
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 선택된 탭 활성화
+            if (tabName === 'rules') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('rulesTab').classList.add('active');
+            } else if (tabName === 'interpolation') {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('interpolationTab').classList.add('active');
+            }
+        }
+
         // 선박 규칙을 반환하는 함수 (IF문 기반)
         function getRules(shipType, voyageArea, length) {
             // 항해구역 간소화 (harbor도 coastal로 처리)
