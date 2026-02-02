@@ -487,8 +487,8 @@
                             <label for="ip">IP (산업인력 운송선박 코드)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="green" name="notation" value="green">
-                            <label for="green">GREEN (친환경)</label>
+                            <input type="checkbox" id="sfv" name="notation" value="sfv">
+                            <label for="sfv">SFV (토레몰리노스)</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="bwts" name="notation" value="bwts">
@@ -790,8 +790,7 @@
 
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
-            'Green Passport': '선박 환경 관리 및 재활용 계획서',
-            'NOx Technical Code': '질소산화물 배출 저감 기술 규칙',
+            'SFV Protocol': '어선 안전을 위한 토레몰리노스 의정서 (Torremolinos Protocol for Safety of Fishing Vessels)',
             'BWTS 규칙': '선박 평형수 처리장치 설치 및 운영 요구사항',
             'BWM Convention': '선박 평형수 관리 협약',
             'SCRUBBER 규칙': '황산화물(SOx) 배출 저감 장치 설치 및 운영 기준',
@@ -817,8 +816,8 @@
             if (notations.includes('ip')) {
                 additionalRules.push('IP Code');
             }
-            if (notations.includes('green')) {
-                additionalRules.push('Green Passport', 'NOx Technical Code');
+            if (notations.includes('sfv')) {
+                additionalRules.push('SFV Protocol');
             }
             if (notations.includes('bwts')) {
                 additionalRules.push('BWTS 규칙', 'BWM Convention');
@@ -881,7 +880,7 @@
                         'LI': 'LI',
                         'sps': 'SPS',
                         'ip': 'IP',
-                        'green': 'GREEN',
+                        'sfv': 'SFV',
                         'bwts': 'BWTS',
                         'scrubber': 'SCRUBBER',
                         'lngfuel': 'LNG FUEL',
