@@ -472,7 +472,7 @@
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" id="ice" name="notation" value="ice">
-                            <label for="ice">ICE (빙해구역)</label>
+                            <label for="ice">ICE (대빙등급)</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="LI" name="notation" value="LI">
@@ -501,6 +501,10 @@
                         <div class="checkbox-item">
                             <input type="checkbox" id="ammoniaready" name="notation" value="ammoniaready">
                             <label for="ammoniaready">Ammonia Ready</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="methanolready" name="notation" value="methanolready">
+                            <label for="methanolready">Methanol Ready</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="ethanolready" name="notation" value="ethanolready">
@@ -799,12 +803,13 @@
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
             'SFV Protocol': '어선 안전을 위한 토레몰리노스 의정서 (Torremolinos Protocol for Safety of Fishing Vessels)',
-            'BLU 관련 지침': '지침 3편 부록 3-1',
-            'LNG Ready': 'LNG 연료 전환 준비 선박 요구사항',
-            'Ammonia Ready': '암모니아 연료 전환 준비 선박 요구사항',
-            'Ethanol Ready': '에탄올 연료 전환 준비 선박 요구사항',
-            'ERS Code': '비상예인장치 요구사항 (Emergency Response Service)',
-            'NBS Code': '선박 소음 저감 규칙 (Noise and Vibration)'
+            'BLU 관련': '지침 3편 부록 3-1',
+            'LNG Ready': '액화천연가스연료 준비선박 지침 2장',
+            'Ammonia Ready': '암모니아 연료선박에 대한 지침서 부록 1',
+            'Methanol Ready': '메탄올 연료 전환 준비 선박 요구사항',
+            'Ethanol Ready': '저인화점연료선박 규칙 적용지침 부록 5',
+            'ERS 관련': 'Emergency Response Service 등록',
+            'NBS 관련': '규칙 9편 5장 제 3절'
         };
 
         // 선급부호에 따른 추가 규칙을 반환하는 함수
@@ -827,7 +832,7 @@
                 additionalRules.push('SFV Protocol');
             }
             if (notations.includes('blu')) {
-                additionalRules.push('BLU 관련 지침');
+                additionalRules.push('BLU 관련');
             }
             if (notations.includes('lngready')) {
                 additionalRules.push('LNG Ready');
@@ -835,14 +840,17 @@
             if (notations.includes('ammoniaready')) {
                 additionalRules.push('Ammonia Ready');
             }
+            if (notations.includes('methanolready')) {
+                additionalRules.push('Methanol Ready');
+            }
             if (notations.includes('ethanolready')) {
                 additionalRules.push('Ethanol Ready');
             }
             if (notations.includes('ers')) {
-                additionalRules.push('ERS Code');
+                additionalRules.push('ERS 관련');
             }
             if (notations.includes('nbs')) {
-                additionalRules.push('NBS Code');
+                additionalRules.push('NBS 관련');
             }
 
             return additionalRules;
@@ -896,6 +904,7 @@
                         'blu': 'BLU',
                         'lngready': 'LNG Ready',
                         'ammoniaready': 'Ammonia Ready',
+                        'methanolready': 'Methanol Ready',
                         'ethanolready': 'Ethanol Ready',
                         'ers': 'ERS',
                         'nbs': 'NBS'
