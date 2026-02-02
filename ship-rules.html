@@ -463,12 +463,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="length">선박 길이 (미터)</label>
+                    <label for="length">선박 길이 (m)</label>
                     <input type="number" id="length" placeholder="예: 100" min="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label>선급부호 (추가 특성)</label>
+                    <label>선급부호 (Class Notation)</label>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" id="ice" name="notation" value="ice">
@@ -491,8 +491,8 @@
                             <label for="sfv">SFV (토레몰리노스)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="bwts" name="notation" value="bwts">
-                            <label for="bwts">BWTS (평형수처리)</label>
+                            <input type="checkbox" id="blu" name="notation" value="blu">
+                            <label for="blu">BLU</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="scrubber" name="notation" value="scrubber">
@@ -791,8 +791,7 @@
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
             'SFV Protocol': '어선 안전을 위한 토레몰리노스 의정서 (Torremolinos Protocol for Safety of Fishing Vessels)',
-            'BWTS 규칙': '선박 평형수 처리장치 설치 및 운영 요구사항',
-            'BWM Convention': '선박 평형수 관리 협약',
+            '지침 3편 부록 3-1': 'BLU 관련 선박 검사 지침',
             'SCRUBBER 규칙': '황산화물(SOx) 배출 저감 장치 설치 및 운영 기준',
             'MARPOL Annex VI': '선박으로부터의 대기오염 방지 규칙',
             'LNG Fuel 규칙': 'LNG 연료 추진 선박의 설계 및 안전 요구사항',
@@ -819,8 +818,8 @@
             if (notations.includes('sfv')) {
                 additionalRules.push('SFV Protocol');
             }
-            if (notations.includes('bwts')) {
-                additionalRules.push('BWTS 규칙', 'BWM Convention');
+            if (notations.includes('blu')) {
+                additionalRules.push('지침 3편 부록 3-1');
             }
 
             if (notations.includes('scrubber')) {
@@ -881,7 +880,7 @@
                         'sps': 'SPS',
                         'ip': 'IP',
                         'sfv': 'SFV',
-                        'bwts': 'BWTS',
+                        'blu': 'BLU',
                         'scrubber': 'SCRUBBER',
                         'lngfuel': 'LNG FUEL',
                         'esp': 'ESP'
