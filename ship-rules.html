@@ -1035,18 +1035,9 @@
             }
 
             interpolationChart = new Chart(ctx, {
-                type: 'line',
+                type: 'scatter',
                 data: {
                     datasets: [
-                        {
-                            label: 'Given value',
-                            data: xValues.map((x, i) => ({x: x, y: yValues[i]})),
-                            borderColor: 'transparent',
-                            backgroundColor: 'rgba(30, 58, 138, 1)',
-                            pointRadius: 8,
-                            pointStyle: 'circle',
-                            showLine: false
-                        },
                         {
                             label: 'Interpolation',
                             data: curveX.map((x, i) => ({x: x, y: curveY[i]})),
@@ -1054,16 +1045,29 @@
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             pointRadius: 0,
-                            tension: 0
+                            showLine: true,
+                            tension: 0,
+                            type: 'line'
+                        },
+                        {
+                            label: 'Given value',
+                            data: xValues.map((x, i) => ({x: x, y: yValues[i]})),
+                            borderColor: 'rgba(30, 58, 138, 1)',
+                            backgroundColor: 'rgba(30, 58, 138, 1)',
+                            pointRadius: 8,
+                            pointStyle: 'circle',
+                            pointBorderWidth: 2,
+                            pointBorderColor: 'rgba(30, 58, 138, 1)'
                         },
                         {
                             label: 'Find value',
                             data: [{x: findX, y: findY}],
-                            borderColor: 'transparent',
+                            borderColor: 'rgba(239, 68, 68, 1)',
                             backgroundColor: 'rgba(239, 68, 68, 1)',
-                            pointRadius: 12,
-                            pointStyle: 'star',
-                            showLine: false
+                            pointRadius: 15,
+                            pointStyle: 'rectRot',
+                            pointBorderWidth: 3,
+                            pointBorderColor: 'rgba(239, 68, 68, 1)'
                         }
                     ]
                 },
