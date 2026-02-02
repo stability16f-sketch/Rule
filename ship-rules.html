@@ -475,12 +475,12 @@
                             <label for="ice">ICE (빙해구역)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="oil" name="notation" value="oil">
-                            <label for="oil">OIL REC (유회수설비)</label>
+                            <input type="checkbox" id="LI" name="notation" value="LI">
+                            <label for="LI">LI (Loading Computer)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="dp" name="notation" value="dp">
-                            <label for="dp">DP (동적위치유지)</label>
+                            <input type="checkbox" id="sps" name="notation" value="sps">
+                            <label for="sps">SPS (특수목적선코드)</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="eedi" name="notation" value="eedi">
@@ -782,10 +782,13 @@
             'IGC Code': '국제 가스운반선 규칙 - 액화가스 산적 운송선 구조 및 설비',
             '연안 가스운반선 안전 규칙': '연안을 항해하는 가스운반선의 안전 기준',
             '가스운반선 특별 요구사항': '액화가스 운반선의 화물 격납, 안전설비 특별 요구사항',
-            'ICE Class 규칙': '빙해 구역 운항을 위한 선체 강화 및 추가 설비 요구사항',
+
+            '빙해운항선박 지침': '빙해 구역 운항을 위한 선체 강화 및 추가 설비 요구사항',
             'Polar Code': '극지 운항 선박에 대한 안전 및 환경보호 규칙',
-            'Oil Recovery 규칙': '유류 회수 설비 및 운영 절차에 관한 요구사항',
-            'DP 규칙': '동적 위치 유지 시스템 설치 및 운영 기준',
+
+            'TEST REPORT': 'UR L5',
+
+            'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'EEDI 규칙': '에너지 효율 설계 지수 충족 요구사항',
             'Green Passport': '선박 환경 관리 및 재활용 계획서',
             'NOx Technical Code': '질소산화물 배출 저감 기술 규칙',
@@ -803,13 +806,13 @@
             const additionalRules = [];
 
             if (notations.includes('ice')) {
-                additionalRules.push('ICE Class 규칙', 'Polar Code');
+                additionalRules.push('빙해운항선박 지침');
             }
-            if (notations.includes('oil')) {
-                additionalRules.push('Oil Recovery 규칙');
+            if (notations.includes('LI')) {
+                additionalRules.push('TEST REPORT');
             }
-            if (notations.includes('dp')) {
-                additionalRules.push('DP 규칙');
+            if (notations.includes('sps')) {
+                additionalRules.push('SPS Code');
             }
             if (notations.includes('eedi')) {
                 additionalRules.push('EEDI 규칙');
@@ -874,8 +877,8 @@
                 if (notations.length > 0) {
                     const notationNames = {
                         'ice': 'ICE',
-                        'oil': 'OIL REC',
-                        'dp': 'DP',
+                        'LI': 'LI',
+                        'sps': 'SPS',
                         'eedi': 'EEDI',
                         'green': 'GREEN',
                         'bwts': 'BWTS',
