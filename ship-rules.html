@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KR STABILITY</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -471,6 +472,37 @@
             <button id="pdfBtn" class="pdf-btn" onclick="downloadPDF()">
                 🖨️ PDF로 저장 (인쇄)
             </button>
+
+            <!-- 보간 계산기 섹션 -->
+            <div class="card" style="margin-top: 30px;">
+                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📈 Cubic Spline 보간 계산기</h2>
+
+                <div class="form-group">
+                    <label>X 값 (쉼표로 구분)</label>
+                    <input type="text" id="xValues" value="10, 20, 30, 40" placeholder="예: 10, 20, 30, 40">
+                </div>
+
+                <div class="form-group">
+                    <label>Y 값 (쉼표로 구분)</label>
+                    <input type="text" id="yValues" value="5, 4.4, 3.1, 2" placeholder="예: 5, 4.4, 3.1, 2">
+                </div>
+
+                <div class="form-group">
+                    <label>보간할 X 값</label>
+                    <input type="number" id="interpolateX" value="21.5" step="0.1" placeholder="예: 21.5">
+                </div>
+
+                <button class="search-btn" onclick="calculateInterpolation()">📊 보간 계산</button>
+
+                <div id="interpolationResult" style="display: none; margin-top: 20px; padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 10px;">
+                    <h3 style="color: #1e40af; margin-bottom: 10px;">계산 결과</h3>
+                    <p id="resultText" style="font-size: 18px; font-weight: 600; color: #1e3a8a;"></p>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <canvas id="interpolationChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -864,6 +896,218 @@
                 bbchp: 'BBCHP'
             };
             return names[nationality] || nationality;
+        }
+
+        // ===== Cubic Spline 보간 계산기 =====
+
+        // Cubic Spline 클래스
+        class CubicSpline {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.n = x.length;
+                this.calculateCoefficients();
+            }
+
+            calculateCoefficients() {
+                const n = this.n - 1;
+                const h = [];
+                const alpha = [];
+
+                // Calculate h and alpha
+                for (let i = 0; i < n; i++) {
+                    h[i] = this.x[i + 1] - this.x[i];
+                }
+
+                for (let i = 1; i < n; i++) {
+                    alpha[i] = (3 / h[i]) * (this.y[i + 1] - this.y[i]) -
+                               (3 / h[i - 1]) * (this.y[i] - this.y[i - 1]);
+                }
+
+                // Solve tridiagonal system
+                const l = [1];
+                const mu = [0];
+                const z = [0];
+
+                for (let i = 1; i < n; i++) {
+                    l[i] = 2 * (this.x[i + 1] - this.x[i - 1]) - h[i - 1] * mu[i - 1];
+                    mu[i] = h[i] / l[i];
+                    z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+                }
+
+                l[n] = 1;
+                z[n] = 0;
+
+                this.c = new Array(this.n).fill(0);
+                this.b = new Array(n);
+                this.d = new Array(n);
+
+                for (let j = n - 1; j >= 0; j--) {
+                    this.c[j] = z[j] - mu[j] * this.c[j + 1];
+                    this.b[j] = (this.y[j + 1] - this.y[j]) / h[j] -
+                                h[j] * (this.c[j + 1] + 2 * this.c[j]) / 3;
+                    this.d[j] = (this.c[j + 1] - this.c[j]) / (3 * h[j]);
+                }
+            }
+
+            interpolate(xi) {
+                // Find the right interval
+                let i = 0;
+                for (i = 0; i < this.n - 1; i++) {
+                    if (xi <= this.x[i + 1]) break;
+                }
+
+                if (i >= this.n - 1) i = this.n - 2;
+
+                const dx = xi - this.x[i];
+                return this.y[i] +
+                       this.b[i] * dx +
+                       this.c[i] * dx * dx +
+                       this.d[i] * dx * dx * dx;
+            }
+        }
+
+        let interpolationChart = null;
+
+        function calculateInterpolation() {
+            try {
+                // Parse input values
+                const xInput = document.getElementById('xValues').value;
+                const yInput = document.getElementById('yValues').value;
+                const interpolateX = parseFloat(document.getElementById('interpolateX').value);
+
+                const xValues = xInput.split(',').map(v => parseFloat(v.trim()));
+                const yValues = yInput.split(',').map(v => parseFloat(v.trim()));
+
+                // Validate inputs
+                if (xValues.length !== yValues.length) {
+                    alert('X 값과 Y 값의 개수가 같아야 합니다.');
+                    return;
+                }
+
+                if (xValues.length < 3) {
+                    alert('최소 3개 이상의 데이터 포인트가 필요합니다.');
+                    return;
+                }
+
+                if (xValues.some(isNaN) || yValues.some(isNaN) || isNaN(interpolateX)) {
+                    alert('올바른 숫자를 입력해주세요.');
+                    return;
+                }
+
+                // Create cubic spline
+                const spline = new CubicSpline(xValues, yValues);
+
+                // Calculate interpolated value
+                const interpolatedY = spline.interpolate(interpolateX);
+
+                // Display result
+                document.getElementById('resultText').textContent =
+                    `X = ${interpolateX}에서 보간된 값: Y = ${interpolatedY.toFixed(4)}`;
+                document.getElementById('interpolationResult').style.display = 'block';
+
+                // Generate curve data
+                const minX = Math.min(...xValues);
+                const maxX = Math.max(...xValues);
+                const curveX = [];
+                const curveY = [];
+                const step = (maxX - minX) / 200;
+
+                for (let x = minX; x <= maxX; x += step) {
+                    curveX.push(x);
+                    curveY.push(spline.interpolate(x));
+                }
+
+                // Draw chart
+                drawInterpolationChart(xValues, yValues, curveX, curveY, interpolateX, interpolatedY);
+
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function drawInterpolationChart(xValues, yValues, curveX, curveY, findX, findY) {
+            const ctx = document.getElementById('interpolationChart').getContext('2d');
+
+            if (interpolationChart) {
+                interpolationChart.destroy();
+            }
+
+            interpolationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Given value',
+                            data: xValues.map((x, i) => ({x: x, y: yValues[i]})),
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(30, 58, 138, 1)',
+                            pointRadius: 8,
+                            pointStyle: 'circle',
+                            showLine: false
+                        },
+                        {
+                            label: 'Interpolation',
+                            data: curveX.map((x, i) => ({x: x, y: curveY[i]})),
+                            borderColor: 'rgba(0, 0, 0, 1)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0
+                        },
+                        {
+                            label: 'Find value',
+                            data: [{x: findX, y: findY}],
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(239, 68, 68, 1)',
+                            pointRadius: 12,
+                            pointStyle: 'star',
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Interpolation & Find value',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `X: ${context.parsed.x.toFixed(3)}, Y: ${context.parsed.y.toFixed(4)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'X'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Y'
+                            }
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
