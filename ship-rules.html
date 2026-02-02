@@ -476,15 +476,15 @@
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="LI" name="notation" value="LI">
-                            <label for="LI">LI (Loading Computer)</label>
+                            <label for="LI">LI (로딩컴퓨터)</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="sps" name="notation" value="sps">
                             <label for="sps">SPS (특수목적선코드)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="eedi" name="notation" value="eedi">
-                            <label for="eedi">EEDI (에너지효율)</label>
+                            <input type="checkbox" id="ip" name="notation" value="ip">
+                            <label for="ip">IP (산업인력 운송선박 코드)</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="green" name="notation" value="green">
@@ -789,7 +789,7 @@
             'TEST REPORT': 'UR L5',
 
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
-            'EEDI 규칙': '에너지 효율 설계 지수 충족 요구사항',
+            'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
             'Green Passport': '선박 환경 관리 및 재활용 계획서',
             'NOx Technical Code': '질소산화물 배출 저감 기술 규칙',
             'BWTS 규칙': '선박 평형수 처리장치 설치 및 운영 요구사항',
@@ -814,8 +814,8 @@
             if (notations.includes('sps')) {
                 additionalRules.push('SPS Code');
             }
-            if (notations.includes('eedi')) {
-                additionalRules.push('EEDI 규칙');
+            if (notations.includes('ip')) {
+                additionalRules.push('IP Code');
             }
             if (notations.includes('green')) {
                 additionalRules.push('Green Passport', 'NOx Technical Code');
@@ -823,6 +823,7 @@
             if (notations.includes('bwts')) {
                 additionalRules.push('BWTS 규칙', 'BWM Convention');
             }
+
             if (notations.includes('scrubber')) {
                 additionalRules.push('SCRUBBER 규칙', 'MARPOL Annex VI');
             }
@@ -879,7 +880,7 @@
                         'ice': 'ICE',
                         'LI': 'LI',
                         'sps': 'SPS',
-                        'eedi': 'EEDI',
+                        'ip': 'IP',
                         'green': 'GREEN',
                         'bwts': 'BWTS',
                         'scrubber': 'SCRUBBER',
