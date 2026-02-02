@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KR STABILITY</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 바다 애니메이션 */
+        .ocean {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                rgba(30, 58, 138, 0.3) 0%,
+                rgba(59, 130, 246, 0.5) 50%,
+                rgba(14, 165, 233, 0.7) 100%);
+            z-index: 0;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 150px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,50 Q300,0 600,50 T1200,50 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: 600px 120px;
+            animation: wave 15s linear infinite;
+        }
+
+        .wave:nth-child(2) {
+            bottom: 20px;
+            opacity: 0.5;
+            animation: wave 10s linear infinite reverse;
+        }
+
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-600px); }
+        }
+
+        /* 선박 애니메이션 */
+        .ship {
+            position: fixed;
+            bottom: 180px;
+            right: -200px;
+            font-size: 60px;
+            animation: sail 30s linear infinite;
+            z-index: 1;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+        }
+
+        @keyframes sail {
+            0% { right: -200px; }
+            100% { right: 100%; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #e0f2fe;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .pdf-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .pdf-btn:active {
+            transform: translateY(0);
+        }
+
+        .pdf-btn.show {
+            display: block;
+        }
+
+        .result {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* PDF 인쇄 스타일 */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .ocean, .ship, .header, .card form, .pdf-btn {
+                display: none !important;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .card {
+                background: white;
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .result {
+                display: block !important;
+                background: white;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .result h3 {
+                color: #000;
+                font-size: 24px;
+                margin-bottom: 20px;
+                page-break-after: avoid;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+
+            .result-item {
+                background: white;
+                border: 1px solid #ddd;
+                padding: 12px;
+                page-break-inside: avoid;
+            }
+
+            .result-item h4 {
+                color: #000;
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+
+            .result-item p {
+                color: #333;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .badge {
+                background: #eee;
+                color: #333;
+                border: 1px solid #ccc;
+            }
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .result-item h4 {
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .result-item p {
+            color: #4b5563;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ocean">
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+    <div class="ship">🚢</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>⚓ KR STABILITY</h1>
+            <p>선박의 종류, 항해구역, 길이를 입력하여 적용되는 규칙을 확인하세요</p>
+        </div>
+
+        <div class="card">
+            <form id="shipForm">
+                <div class="form-group">
+                    <label for="nationality">국적</label>
+                    <select id="nationality" required>
+                        <option value="">선택하세요</option>
+                        <option value="korean">한국적</option>
+                        <option value="foreign">순수외국적</option>
+                        <option value="bbchp">BBCHP</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="shipType">선박의 종류</label>
+                    <select id="shipType" required>
+                        <option value="">선택하세요</option>
+                        <option value="cargo">화물선 (Cargo Ship)</option>
+                        <option value="tanker">탱커 (Tanker)</option>
+                        <option value="passenger">여객선 (Passenger Ship)</option>
+                        <option value="container">컨테이너선 (Container Ship)</option>
+                        <option value="fishing">어선 (Fishing Vessel)</option>
+                        <option value="yacht">요트 (Yacht)</option>
+                        <option value="lng">LNG선 (LNG Carrier)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="voyageArea">항해구역</label>
+                    <select id="voyageArea" required>
+                        <option value="">선택하세요</option>
+                        <option value="ocean">원양 (Ocean Going)</option>
+                        <option value="coastal">근해 (Great Coastal)</option>
+                        <option value="harbor">연해 (Coastal)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="length">선박 길이 (미터)</label>
+                    <input type="number" id="length" placeholder="예: 100" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>선급부호 (추가 특성)</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="ice" name="notation" value="ice">
+                            <label for="ice">ICE (빙해구역)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="oil" name="notation" value="oil">
+                            <label for="oil">OIL REC (유회수설비)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="dp" name="notation" value="dp">
+                            <label for="dp">DP (동적위치유지)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="eedi" name="notation" value="eedi">
+                            <label for="eedi">EEDI (에너지효율)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="green" name="notation" value="green">
+                            <label for="green">GREEN (친환경)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bwts" name="notation" value="bwts">
+                            <label for="bwts">BWTS (평형수처리)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="scrubber" name="notation" value="scrubber">
+                            <label for="scrubber">SCRUBBER (스크러버)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="lngfuel" name="notation" value="lngfuel">
+                            <label for="lngfuel">LNG FUEL (LNG연료)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="esp" name="notation" value="esp">
+                            <label for="esp">ESP (강화검사)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="search-btn">🔍 적용 규칙 검색</button>
+            </form>
+
+            <div id="result" class="result">
+                <h3>📋 적용되는 규칙</h3>
+                <div id="resultContent"></div>
+            </div>
+
+            <button id="pdfBtn" class="pdf-btn" onclick="downloadPDF()">
+                🖨️ PDF로 저장 (인쇄)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 선박 규칙을 반환하는 함수 (IF문 기반)
+        function getRules(shipType, voyageArea, length) {
+            // 항해구역 간소화 (harbor도 coastal로 처리)
+            if (voyageArea === 'harbor') {
+                voyageArea = 'coastal';
+            }
+
+            // 화물선 (Cargo Ship)
+            if (shipType === 'cargo') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['SOLAS 기본 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약'];
+                    } else if (length < 100) {
+                        return ['SOLAS 전체 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 전체 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 화물선 안전 규칙', '선박 안전법'];
+                    } else if (length < 100) {
+                        return ['연안 화물선 안전 규칙', '선박 안전법', 'MARPOL 일부 적용'];
+                    } else {
+                        return ['SOLAS 일부 규정', '연안 화물선 안전 규칙', 'MARPOL 협약'];
+                    }
+                }
+            }
+
+            // 탱커 (Tanker)
+            if (shipType === 'tanker') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'IBC Code'];
+                    } else if (length < 100) {
+                        return ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 전체', 'MARPOL 전 부속서', 'IBC Code', 'ISM Code', 'ISPS Code', 'Double Hull 요구사항'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 탱커 안전 규칙', 'MARPOL Annex I'];
+                    } else if (length < 100) {
+                        return ['연안 탱커 안전 규칙', 'MARPOL Annex I, II'];
+                    } else {
+                        return ['SOLAS 일부', 'MARPOL Annex I, II', 'ISM Code'];
+                    }
+                }
+            }
+
+            // 여객선 (Passenger Ship)
+            if (shipType === 'passenger') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['SOLAS Chapter III (구명설비)', '여객선 안전 규칙', 'LSA Code'];
+                    } else if (length < 100) {
+                        return ['SOLAS 전체', '여객선 안전 규칙', 'LSA Code', 'ISM Code', 'Safe Return to Port'];
+                    } else {
+                        return ['SOLAS 전체', '여객선 안전 규칙', 'LSA Code', 'ISM Code', 'ISPS Code', 'Safe Return to Port'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 여객선 안전 규칙', '구명설비 규정'];
+                    } else if (length < 100) {
+                        return ['연안 여객선 안전 규칙', 'SOLAS Chapter III', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 일부 규정', '연안 여객선 안전 규칙', 'ISM Code'];
+                    }
+                }
+            }
+
+            // 컨테이너선 (Container Ship)
+            if (shipType === 'container') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['SOLAS 기본 규정', 'CSS Code (화물 고박)', 'IMDG Code'];
+                    } else if (length < 100) {
+                        return ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code', 'ISPS Code', '대형 컨테이너선 안정성 규정'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 화물선 규칙', 'CSS Code'];
+                    } else if (length < 100) {
+                        return ['연안 화물선 규칙', 'CSS Code', 'IMDG Code'];
+                    } else {
+                        return ['SOLAS 일부', 'CSS Code', 'IMDG Code', 'ISM Code'];
+                    }
+                }
+            }
+
+            // 어선 (Fishing Vessel)
+            if (shipType === 'fishing') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol'];
+                    } else if (length < 100) {
+                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol', '어선 안전 협약'];
+                    } else {
+                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol', '어선 안전 협약', 'ISM Code'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 어선 안전 규칙', '소형 어선 안전 기준'];
+                    } else if (length < 100) {
+                        return ['연안 어선 안전 규칙', '어선법'];
+                    } else {
+                        return ['연안 어선 안전 규칙', '어선법', 'Torremolinos Protocol'];
+                    }
+                }
+            }
+
+            // 요트 (Yacht)
+            if (shipType === 'yacht') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['RCD (Recreational Craft Directive)', '소형 선박 안전 기준'];
+                    } else if (length < 100) {
+                        return ['RCD', 'SOLAS 일부 (자율 적용)', 'ISO 소형 요트 기준'];
+                    } else {
+                        return ['LY3 Code (대형 요트)', 'SOLAS 일부', 'ISM Code (자율)'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['소형 선박 안전 규칙', 'RCD'];
+                    } else if (length < 100) {
+                        return ['소형 선박 안전 규칙', 'RCD'];
+                    } else {
+                        return ['레저선박 안전 규칙', 'LY3 Code'];
+                    }
+                }
+            }
+
+            // LNG선 (LNG Carrier)
+            if (shipType === 'lng') {
+                if (voyageArea === 'ocean') {
+                    if (length < 24) {
+                        return ['SOLAS 기본 규정', 'IGC Code', 'MARPOL 협약'];
+                    } else if (length < 100) {
+                        return ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code', 'ISPS Code', '가스운반선 특별 요구사항'];
+                    }
+                } else if (voyageArea === 'coastal') {
+                    if (length < 24) {
+                        return ['연안 가스운반선 안전 규칙', 'IGC Code'];
+                    } else if (length < 100) {
+                        return ['연안 가스운반선 안전 규칙', 'IGC Code', 'ISM Code'];
+                    } else {
+                        return ['SOLAS 일부', 'IGC Code', 'ISM Code', 'MARPOL 협약'];
+                    }
+                }
+            }
+
+            // 해당 조건이 없는 경우
+            return [];
+        }
+
+        const descriptions = {
+            'SOLAS 기본 규정': '선박의 안전을 위한 국제 협약의 기본 요구사항',
+            'SOLAS 전체 규정': '선박의 안전에 관한 국제 협약 전체 챕터 적용',
+            'SOLAS 전체': '선박의 안전에 관한 국제 협약 전체 챕터 적용',
+            'SOLAS 규정': '선박의 안전에 관한 국제 협약',
+            'MARPOL 협약': '해양 오염 방지를 위한 국제 협약',
+            'ISM Code': '국제 안전관리 규칙 - 선박 및 회사의 안전관리 체계',
+            'ISPS Code': '국제 선박 및 항만시설 보안 규칙',
+            'IBC Code': '산적 화학제품 운송선 규칙',
+            'LSA Code': '구명설비 규칙',
+            'CSS Code': '화물 고박 안전 규칙',
+            'IMDG Code': '국제 해상 위험물 규칙',
+            'Safe Return to Port': '여객선의 안전한 귀항 요구사항',
+            'Torremolinos Protocol': '어선 안전 국제 협약',
+            'RCD': '레저선박 지침',
+            'LY3 Code': '대형 요트 규칙',
+            'Double Hull 요구사항': '이중선체 구조 요구사항',
+            '선박 안전법': '국내 선박 안전에 관한 법률',
+            '연안 화물선 안전 규칙': '연안을 항해하는 화물선의 안전 기준',
+            '연안 탱커 안전 규칙': '연안을 항해하는 탱커의 안전 기준',
+            '연안 여객선 안전 규칙': '연안을 항해하는 여객선의 안전 기준',
+            '원양 어선 안전 규칙': '원양을 항해하는 어선의 안전 기준',
+            '연안 어선 안전 규칙': '연안을 항해하는 어선의 안전 기준',
+            '소형 선박 안전 규칙': '소형 선박의 안전 기준',
+            '레저선박 안전 규칙': '레저 목적 선박의 안전 기준',
+            '국제 화물선 안전 설비 규칙': '화물선에 필요한 안전 설비 규정',
+            '여객선 안전 규칙': '여객선의 안전 운항을 위한 규칙',
+            '어선법': '어선의 등록 및 관리에 관한 법률',
+            '소형 어선 안전 기준': '24미터 미만 어선의 안전 기준',
+            '구명설비 규정': '선박 구명설비에 관한 규정',
+            'ISO 소형 요트 기준': 'ISO 국제 표준 소형 요트 안전 기준',
+            'MARPOL Annex I (유류오염방지)': 'MARPOL 부속서 I - 유류에 의한 오염 방지',
+            'MARPOL Annex I': 'MARPOL 부속서 I - 유류에 의한 오염 방지',
+            'MARPOL Annex I, II': 'MARPOL 부속서 I(유류), II(산적 유해액체물질) 오염 방지',
+            'MARPOL 전 부속서': 'MARPOL 협약 모든 부속서(I-VI) 적용',
+            'MARPOL 일부 적용': 'MARPOL 협약 중 일부 부속서 적용',
+            '대형 컨테이너선 안정성 규정': '대형 컨테이너선의 복원성 및 안정성 강화 규정',
+            'SOLAS Chapter III (구명설비)': 'SOLAS 협약 제3장 - 구명설비 및 장치',
+            'SOLAS Chapter III': 'SOLAS 협약 제3장 - 구명설비 및 장치',
+            'SOLAS 일부 규정': 'SOLAS 협약 중 해당 선박에 적용되는 일부 챕터',
+            'SOLAS 일부': 'SOLAS 협약 중 해당 선박에 적용되는 일부 챕터',
+            'SOLAS 일부 (자율 적용)': 'SOLAS 협약 중 자율적으로 적용할 수 있는 부분',
+            'ISM Code (자율)': '국제 안전관리 규칙 - 자율 적용',
+            '소형 선박 안전 기준': '소형 선박의 안전 운항을 위한 기준',
+            '어선 안전 협약': '어선의 안전에 관한 국제 협약',
+            'IGC Code': '국제 가스운반선 규칙 - 액화가스 산적 운송선 구조 및 설비',
+            '연안 가스운반선 안전 규칙': '연안을 항해하는 가스운반선의 안전 기준',
+            '가스운반선 특별 요구사항': '액화가스 운반선의 화물 격납, 안전설비 특별 요구사항',
+            'ICE Class 규칙': '빙해 구역 운항을 위한 선체 강화 및 추가 설비 요구사항',
+            'Polar Code': '극지 운항 선박에 대한 안전 및 환경보호 규칙',
+            'Oil Recovery 규칙': '유류 회수 설비 및 운영 절차에 관한 요구사항',
+            'DP 규칙': '동적 위치 유지 시스템 설치 및 운영 기준',
+            'EEDI 규칙': '에너지 효율 설계 지수 충족 요구사항',
+            'Green Passport': '선박 환경 관리 및 재활용 계획서',
+            'NOx Technical Code': '질소산화물 배출 저감 기술 규칙',
+            'BWTS 규칙': '선박 평형수 처리장치 설치 및 운영 요구사항',
+            'BWM Convention': '선박 평형수 관리 협약',
+            'SCRUBBER 규칙': '황산화물(SOx) 배출 저감 장치 설치 및 운영 기준',
+            'MARPOL Annex VI': '선박으로부터의 대기오염 방지 규칙',
+            'LNG Fuel 규칙': 'LNG 연료 추진 선박의 설계 및 안전 요구사항',
+            'IGF Code': '가스 및 저인화점 연료 사용 선박 국제 안전 규칙',
+            'ESP 규칙': '선체 및 기관 강화 검사 프로그램 요구사항'
+        };
+
+        // 선급부호에 따른 추가 규칙을 반환하는 함수
+        function getNotationRules(notations) {
+            const additionalRules = [];
+
+            if (notations.includes('ice')) {
+                additionalRules.push('ICE Class 규칙', 'Polar Code');
+            }
+            if (notations.includes('oil')) {
+                additionalRules.push('Oil Recovery 규칙');
+            }
+            if (notations.includes('dp')) {
+                additionalRules.push('DP 규칙');
+            }
+            if (notations.includes('eedi')) {
+                additionalRules.push('EEDI 규칙');
+            }
+            if (notations.includes('green')) {
+                additionalRules.push('Green Passport', 'NOx Technical Code');
+            }
+            if (notations.includes('bwts')) {
+                additionalRules.push('BWTS 규칙', 'BWM Convention');
+            }
+            if (notations.includes('scrubber')) {
+                additionalRules.push('SCRUBBER 규칙', 'MARPOL Annex VI');
+            }
+            if (notations.includes('lngfuel')) {
+                additionalRules.push('LNG Fuel 규칙', 'IGF Code');
+            }
+            if (notations.includes('esp')) {
+                additionalRules.push('ESP 규칙');
+            }
+
+            return additionalRules;
+        }
+
+        document.getElementById('shipForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // INPUT: 국적, 선박의 종류, 항해구역, 길이
+            const nationality = document.getElementById('nationality').value;
+            const shipType = document.getElementById('shipType').value;
+            const voyageArea = document.getElementById('voyageArea').value;
+            const length = parseInt(document.getElementById('length').value);
+
+            // 선택된 선급부호 가져오기
+            const checkboxes = document.querySelectorAll('input[name="notation"]:checked');
+            const notations = Array.from(checkboxes).map(cb => cb.value);
+
+            // IF문 기반 함수를 호출하여 적용 규칙 가져오기
+            const basicRules = getRules(shipType, voyageArea, length);
+
+            // 선급부호에 따른 추가 규칙 가져오기
+            const notationRules = notations.length > 0 ? getNotationRules(notations) : [];
+
+            // OUTPUT: 결과 표시
+            displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations);
+        });
+
+        function displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations = []) {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            const totalRules = basicRules.length + notationRules.length;
+
+            if (totalRules === 0) {
+                resultContent.innerHTML = '<p style="color: #ef4444;">해당 조건에 대한 규칙 정보가 없습니다.</p>';
+            } else {
+                let html = '<div style="margin-bottom: 20px;">';
+                html += `<span class="badge">국적: ${getNationalityName(nationality)}</span>`;
+                html += `<span class="badge">선박 종류: ${getShipTypeName(shipType)}</span>`;
+                html += `<span class="badge">항해구역: ${getVoyageAreaName(voyageArea)}</span>`;
+                html += `<span class="badge">길이: ${length}m</span>`;
+
+                // 선급부호 표시
+                if (notations.length > 0) {
+                    const notationNames = {
+                        'ice': 'ICE',
+                        'oil': 'OIL REC',
+                        'dp': 'DP',
+                        'eedi': 'EEDI',
+                        'green': 'GREEN',
+                        'bwts': 'BWTS',
+                        'scrubber': 'SCRUBBER',
+                        'lngfuel': 'LNG FUEL',
+                        'esp': 'ESP'
+                    };
+                    notations.forEach(notation => {
+                        html += `<span class="badge" style="background: #059669;">${notationNames[notation]}</span>`;
+                    });
+                }
+
+                html += '</div>';
+
+                // 3컬럼 그리드 시작
+                html += '<div class="result-grid">';
+
+                // 기본 규칙 표시 (파란색)
+                basicRules.forEach(rule => {
+                    html += `
+                        <div class="result-item">
+                            <h4>✓ ${rule}</h4>
+                            <p>${descriptions[rule] || '규칙 설명이 준비 중입니다.'}</p>
+                        </div>
+                    `;
+                });
+
+                // 선급부호 규칙 표시 (초록색)
+                notationRules.forEach(rule => {
+                    html += `
+                        <div class="result-item" style="border-left: 4px solid #10b981; background: #f0fdf4;">
+                            <h4 style="color: #059669;">✓ ${rule}</h4>
+                            <p>${descriptions[rule] || '규칙 설명이 준비 중입니다.'}</p>
+                        </div>
+                    `;
+                });
+
+                // 그리드 종료
+                html += '</div>';
+
+                resultContent.innerHTML = html;
+            }
+
+            resultDiv.classList.add('show');
+
+            // PDF 다운로드 버튼 표시
+            const pdfBtn = document.getElementById('pdfBtn');
+            if (totalRules > 0) {
+                pdfBtn.classList.add('show');
+            } else {
+                pdfBtn.classList.remove('show');
+            }
+        }
+
+        function downloadPDF() {
+            // 브라우저 네이티브 PDF 출력 사용 (최고 화질)
+            window.print();
+        }
+
+        function getShipTypeName(type) {
+            const names = {
+                cargo: '화물선',
+                tanker: '탱커',
+                passenger: '여객선',
+                container: '컨테이너선',
+                fishing: '어선',
+                yacht: '요트',
+                lng: 'LNG선'
+            };
+            return names[type] || type;
+        }
+
+        function getVoyageAreaName(area) {
+            const names = {
+                ocean: '원양',
+                coastal: '근해',
+                harbor: '연해',
+                river: '내수면'
+            };
+            return names[area] || area;
+        }
+
+        function getNationalityName(nationality) {
+            const names = {
+                korean: '한국적',
+                foreign: '순수외국적',
+                bbchp: 'BBCHP'
+            };
+            return names[nationality] || nationality;
+        }
+    </script>
+</body>
+</html>
