@@ -552,6 +552,10 @@
                             <input type="checkbox" id="liqbc" name="notation" value="liqbc">
                             <label for="liqbc">LIQBC (1/2)</label>
                         </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="csr" name="notation" value="csr">
+                            <label for="csr">CSR</label>
+                        </div>
                     </div>
                 </div>
 
@@ -844,7 +848,8 @@
             'Ethanol Ready': '저인화점연료선박 규칙 적용지침 부록 5',
             'ERS 관련': 'Emergency Response Service 등록',
             'NBS 관련': '규칙 9편 5장 제 3절',
-            'LIQBC 관련': '지침 7편 부록 7-12 광석산적화물의 액상화'
+            'LIQBC 관련': '지침 7편 부록 7-12 광석산적화물의 액상화',
+            'CSR 관련': 'Common Structural Rules'
         };
 
         // 선급부호에 따른 추가 규칙을 반환하는 함수
@@ -889,6 +894,9 @@
             }
             if (notations.includes('liqbc')) {
                 additionalRules.push('LIQBC 관련');
+            }
+            if (notations.includes('csr')) {
+                additionalRules.push('CSR 관련');
             }
 
             return additionalRules;
@@ -950,7 +958,8 @@
                         'ethanolready': 'Ethanol Ready',
                         'ers': 'ERS',
                         'nbs': 'NBS',
-                        'liqbc': 'LIQBC (1/2)'
+                        'liqbc': 'LIQBC (1/2)',
+                        'csr': 'CSR'
                     };
                     notations.forEach(notation => {
                         html += `<span class="badge" style="background: #059669;">${notationNames[notation]}</span>`;
