@@ -364,6 +364,20 @@
             margin-bottom: 5px;
         }
 
+        /* 2컬럼 폼 레이아웃 */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* 탭 스타일 */
         .tabs {
             display: flex;
@@ -428,43 +442,59 @@
             <!-- 규칙 검색 탭 -->
             <div id="rulesTab" class="tab-content active">
                 <form id="shipForm">
-                <div class="form-group">
-                    <label for="nationality">국적</label>
-                    <select id="nationality" required>
-                        <option value="">선택하세요</option>
-                        <option value="korean">한국적</option>
-                        <option value="foreign">순수외국적</option>
-                        <option value="bbchp">BBCHP</option>
-                    </select>
-                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="nationality">국적</label>
+                            <select id="nationality" required>
+                                <option value="">선택하세요</option>
+                                <option value="korean">한국적</option>
+                                <option value="foreign">순수외국적</option>
+                                <option value="bbchp">BBCHP</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="shipType">선박의 종류</label>
-                    <select id="shipType" required>
-                        <option value="">선택하세요</option>
-                        <option value="cargo">화물선 (Cargo Ship)</option>
-                        <option value="tanker">탱커 (Tanker)</option>
-                        <option value="passenger">여객선 (Passenger Ship)</option>
-                        <option value="container">컨테이너선 (Container Ship)</option>
-                        <option value="fishing">어선 (Fishing Vessel)</option>
-                        <option value="yacht">요트 (Yacht)</option>
-                        <option value="lng">LNG선 (LNG Carrier)</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label for="shipType">선박의 종류</label>
+                            <select id="shipType" required>
+                                <option value="">선택하세요</option>
+                                <option value="cargo">화물선 (Cargo Ship)</option>
+                                <option value="tanker">탱커 (Tanker)</option>
+                                <option value="passenger">여객선 (Passenger Ship)</option>
+                                <option value="container">컨테이너선 (Container Ship)</option>
+                                <option value="fishing">어선 (Fishing Vessel)</option>
+                                <option value="yacht">요트 (Yacht)</option>
+                                <option value="lng">LNG선 (LNG Carrier)</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="voyageArea">항해구역</label>
-                    <select id="voyageArea" required>
-                        <option value="">선택하세요</option>
-                        <option value="ocean">원양 (Ocean Going)</option>
-                        <option value="greatcoastal">근해 (Great Coastal)</option>
-                        <option value="coastal">연해 (Coastal)</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label for="voyageArea">항해구역</label>
+                            <select id="voyageArea" required>
+                                <option value="">선택하세요</option>
+                                <option value="ocean">원양 (Ocean Going)</option>
+                                <option value="greatcoastal">근해 (Great Coastal)</option>
+                                <option value="coastal">연해 (Coastal)</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label for="length">선박 길이 (m)</label>
-                    <input type="number" id="length" placeholder="예: 100" min="1" required>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="length">선박 길이 (m)</label>
+                            <input type="number" id="length" placeholder="예: 100" min="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dwt">재화중량 (DWT)</label>
+                            <input type="number" id="dwt" placeholder="예: 50000" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gt">톤수 (GT)</label>
+                            <input type="number" id="gt" placeholder="예: 30000" min="0">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -867,11 +897,13 @@
         document.getElementById('shipForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // INPUT: 국적, 선박의 종류, 항해구역, 길이
+            // INPUT: 국적, 선박의 종류, 항해구역, 길이, 재화중량, 톤수
             const nationality = document.getElementById('nationality').value;
             const shipType = document.getElementById('shipType').value;
             const voyageArea = document.getElementById('voyageArea').value;
             const length = parseInt(document.getElementById('length').value);
+            const dwt = document.getElementById('dwt').value;
+            const gt = document.getElementById('gt').value;
 
             // 선택된 선급부호 가져오기
             const checkboxes = document.querySelectorAll('input[name="notation"]:checked');
@@ -884,10 +916,10 @@
             const notationRules = notations.length > 0 ? getNotationRules(notations) : [];
 
             // OUTPUT: 결과 표시
-            displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations);
+            displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations, dwt, gt);
         });
 
-        function displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations = []) {
+        function displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations = [], dwt = '', gt = '') {
             const resultDiv = document.getElementById('result');
             const resultContent = document.getElementById('resultContent');
             const totalRules = basicRules.length + notationRules.length;
@@ -900,6 +932,8 @@
                 html += `<span class="badge">선박 종류: ${getShipTypeName(shipType)}</span>`;
                 html += `<span class="badge">항해구역: ${getVoyageAreaName(voyageArea)}</span>`;
                 html += `<span class="badge">길이: ${length}m</span>`;
+                if (dwt) html += `<span class="badge">DWT: ${Number(dwt).toLocaleString()}톤</span>`;
+                if (gt) html += `<span class="badge">GT: ${Number(gt).toLocaleString()}톤</span>`;
 
                 // 선급부호 표시
                 if (notations.length > 0) {
