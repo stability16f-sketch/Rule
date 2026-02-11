@@ -622,42 +622,67 @@
 
         // 선박 규칙을 반환하는 함수 - {협약, 선급, 안전법} 객체 반환
         function getRules(nationality, shipType, voyageArea, length, gt, dwt) {
-            const area = (voyageArea === 'greatcoastal') ? 'coastal' : voyageArea;
+            const gtNum  = parseFloat(gt)  || 0;
+            const dwtNum = parseFloat(dwt) || 0;
             const r = { 협약: [], 선급: [], 안전법: [] };
 
-            // OIL/CHEMICAL TANKER
+            // 국제항해 여부 (원양·근해)
+            const isInternational = (voyageArea === 'ocean' || voyageArea === 'greatcoastal');
+
             if (shipType === 'oilchemicaltanker') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
-                    } else {
-                        r.협약 = ['SOLAS 전체', 'MARPOL 전 부속서', 'IBC Code', 'ISM Code', 'ISPS Code'];
-                        r.선급 = ['Double Hull 요구사항'];
+
+                // ── 협약 (국제항해 시 적용) ──────────────────────────────
+                if (isInternational) {
+
+                    // MARPOL Annex I·II: 150 GT 또는 150 DWT 이상 탱커
+                    if (gtNum >= 150 || dwtNum >= 150) {
+                        r.협약.push('MARPOL Annex I, II');
                     }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.협약 = ['MARPOL Annex I, II', 'IBC Code'];
-                        r.안전법 = ['연안 탱커 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['MARPOL Annex I, II', 'IBC Code'];
-                        r.안전법 = ['연안 탱커 안전 규칙', '선박 안전법'];
+
+                    // IBC Code: 화학탱커 필수
+                    r.협약.push('IBC Code');
+
+                    // SOLAS·ISM·ISPS: GT 기준으로 적용 범위 결정
+                    if (gtNum >= 500 || length >= 100) {
+                        // 대형: SOLAS 전 챕터 + ISM + ISPS
+                        r.협약.push('SOLAS 전체', 'ISM Code', 'ISPS Code');
+                    } else if (gtNum >= 300 || length >= 24) {
+                        // 중형: SOLAS 주요 챕터 + ISM
+                        r.협약.push('SOLAS 규정', 'ISM Code');
                     } else {
-                        r.협약 = ['MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
-                        r.안전법 = ['연안 탱커 안전 규칙'];
-                        r.선급 = ['Double Hull 요구사항'];
+                        // 소형: SOLAS 일부 챕터
+                        r.협약.push('SOLAS 일부 규정');
                     }
+                }
+
+                // ── 선급 (구조 기준에 따른 선급 규칙) ───────────────────
+                // Double Hull: 5,000 DWT 이상 유조선 (MARPOL Annex I Reg.19)
+                if (dwtNum >= 5000) {
+                    r.선급.push('Double Hull 요구사항');
+                }
+                // CSR: 150m 이상 탱커 (IACS Common Structural Rules)
+                if (length >= 150) {
+                    r.선급.push('CSR 관련');
+                }
+
+                // ── 안전법 (한국 국내 법규) ──────────────────────────────
+                // 선박안전법: 24m 이상 선박
+                if (length >= 24) {
+                    r.안전법.push('선박 안전법');
+                }
+                // 연안 탱커 규칙: 연해·평수 구역
+                if (voyageArea === 'coastal' || voyageArea === 'freshwater') {
+                    r.안전법.push('연안 탱커 안전 규칙');
                 }
             }
 
-            // 국적별 적용 규칙 필터링
-            // 순수외국적: 안전법 미적용
+            // ── 국적별 필터링 ────────────────────────────────────────────
+            // 순수외국적: 한국 안전법 미적용
             if (nationality === 'foreign') {
                 r.안전법 = [];
             }
-            // 한국적: 국제항해(원양)가 아니면 협약 미적용
-            if (nationality === 'korean' && area !== 'ocean') {
+            // 한국적: 국내항해(연해·평수)는 협약 미적용
+            if (nationality === 'korean' && !isInternational) {
                 r.협약 = [];
             }
 
