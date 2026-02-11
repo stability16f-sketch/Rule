@@ -448,9 +448,8 @@
                             <label for="nationality">국적</label>
                             <select id="nationality" required>
                                 <option value="">선택하세요</option>
-                                <option value="korean">한국적</option>
+                                <option value="korean">한국적 (BBCHP)</option>
                                 <option value="foreign">순수외국적</option>
-                                <option value="bbchp">BBCHP</option>
                             </select>
                         </div>
 
@@ -1038,9 +1037,8 @@
 
         function getNationalityName(nationality) {
             const names = {
-                korean: '한국적',
-                foreign: '순수외국적',
-                bbchp: 'BBCHP'
+                korean: '한국적 (BBCHP)',
+                foreign: '순수외국적'
             };
             return names[nationality] || nationality;
         }
