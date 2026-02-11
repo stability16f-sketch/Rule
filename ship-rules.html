@@ -457,13 +457,8 @@
                             <label for="shipType">선박의 종류</label>
                             <select id="shipType" required>
                                 <option value="">선택하세요</option>
-                                <option value="cargo">화물선 (Cargo Ship)</option>
-                                <option value="tanker">탱커 (Tanker)</option>
-                                <option value="passenger">여객선 (Passenger Ship)</option>
-                                <option value="container">컨테이너선 (Container Ship)</option>
-                                <option value="fishing">어선 (Fishing Vessel)</option>
-                                <option value="yacht">요트 (Yacht)</option>
-                                <option value="lng">LNG선 (LNG Carrier)</option>
+                                <option value="oiltanker">OIL TANKER</option>
+                                <option value="oilchemicaltanker">OIL/CHEMICAL TANKER</option>
                             </select>
                         </div>
 
@@ -631,37 +626,37 @@
             const area = (voyageArea === 'greatcoastal') ? 'coastal' : voyageArea;
             const r = { 협약: [], 선급: [], 안전법: [] };
 
-            // 화물선 (Cargo Ship)
-            if (shipType === 'cargo') {
+            // OIL TANKER
+            if (shipType === 'oiltanker') {
                 if (area === 'ocean') {
                     if (length < 24) {
-                        r.협약 = ['SOLAS 기본 규정', 'MARPOL 협약'];
-                        r.선급 = ['국제 화물선 안전 설비 규칙'];
+                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)'];
                     } else if (length < 100) {
-                        r.협약 = ['SOLAS 전체 규정', 'MARPOL 협약', 'ISM Code'];
-                        r.선급 = ['국제 화물선 안전 설비 규칙'];
+                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'ISM Code'];
                     } else {
-                        r.협약 = ['SOLAS 전체 규정', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
-                        r.선급 = ['국제 화물선 안전 설비 규칙'];
+                        r.협약 = ['SOLAS 전체', 'MARPOL Annex I (유류오염방지)', 'ISM Code', 'ISPS Code'];
+                        r.선급 = ['Double Hull 요구사항'];
                     }
                 } else if (area === 'coastal') {
                     if (length < 24) {
-                        r.안전법 = ['연안 화물선 안전 규칙', '선박 안전법'];
+                        r.협약 = ['MARPOL Annex I (유류오염방지)'];
+                        r.안전법 = ['연안 탱커 안전 규칙'];
                     } else if (length < 100) {
-                        r.협약 = ['MARPOL 일부 적용'];
-                        r.안전법 = ['연안 화물선 안전 규칙', '선박 안전법'];
+                        r.협약 = ['MARPOL Annex I (유류오염방지)'];
+                        r.안전법 = ['연안 탱커 안전 규칙', '선박 안전법'];
                     } else {
-                        r.협약 = ['SOLAS 일부 규정', 'MARPOL 협약'];
-                        r.안전법 = ['연안 화물선 안전 규칙'];
+                        r.협약 = ['MARPOL Annex I (유류오염방지)', 'ISM Code'];
+                        r.안전법 = ['연안 탱커 안전 규칙'];
+                        r.선급 = ['Double Hull 요구사항'];
                     }
                 }
             }
 
-            // 탱커 (Tanker)
-            else if (shipType === 'tanker') {
+            // OIL/CHEMICAL TANKER
+            else if (shipType === 'oilchemicaltanker') {
                 if (area === 'ocean') {
                     if (length < 24) {
-                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'IBC Code'];
+                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code'];
                     } else if (length < 100) {
                         r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
                     } else {
@@ -670,143 +665,15 @@
                     }
                 } else if (area === 'coastal') {
                     if (length < 24) {
-                        r.협약 = ['MARPOL Annex I'];
+                        r.협약 = ['MARPOL Annex I, II', 'IBC Code'];
                         r.안전법 = ['연안 탱커 안전 규칙'];
                     } else if (length < 100) {
-                        r.협약 = ['MARPOL Annex I, II'];
+                        r.협약 = ['MARPOL Annex I, II', 'IBC Code'];
+                        r.안전법 = ['연안 탱커 안전 규칙', '선박 안전법'];
+                    } else {
+                        r.협약 = ['MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
                         r.안전법 = ['연안 탱커 안전 규칙'];
-                    } else {
-                        r.협약 = ['SOLAS 일부', 'MARPOL Annex I, II', 'ISM Code'];
-                        r.안전법 = ['연안 탱커 안전 규칙'];
-                    }
-                }
-            }
-
-            // 여객선 (Passenger Ship)
-            else if (shipType === 'passenger') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['SOLAS Chapter III (구명설비)', 'LSA Code'];
-                        r.안전법 = ['여객선 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS 전체', 'LSA Code', 'ISM Code', 'Safe Return to Port'];
-                        r.안전법 = ['여객선 안전 규칙'];
-                    } else {
-                        r.협약 = ['SOLAS 전체', 'LSA Code', 'ISM Code', 'ISPS Code', 'Safe Return to Port'];
-                        r.안전법 = ['여객선 안전 규칙'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.선급 = ['구명설비 규정'];
-                        r.안전법 = ['연안 여객선 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS Chapter III', 'ISM Code'];
-                        r.안전법 = ['연안 여객선 안전 규칙'];
-                    } else {
-                        r.협약 = ['SOLAS 일부 규정', 'ISM Code'];
-                        r.안전법 = ['연안 여객선 안전 규칙'];
-                    }
-                }
-            }
-
-            // 컨테이너선 (Container Ship)
-            else if (shipType === 'container') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['SOLAS 기본 규정', 'CSS Code (화물 고박)', 'IMDG Code'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code'];
-                    } else {
-                        r.협약 = ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code', 'ISPS Code'];
-                        r.선급 = ['대형 컨테이너선 안정성 규정'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.협약 = ['CSS Code'];
-                        r.안전법 = ['연안 화물선 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['CSS Code', 'IMDG Code'];
-                        r.안전법 = ['연안 화물선 안전 규칙'];
-                    } else {
-                        r.협약 = ['SOLAS 일부', 'CSS Code', 'IMDG Code', 'ISM Code'];
-                        r.안전법 = ['연안 화물선 안전 규칙'];
-                    }
-                }
-            }
-
-            // 어선 (Fishing Vessel)
-            else if (shipType === 'fishing') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['Torremolinos Protocol'];
-                        r.안전법 = ['원양 어선 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['Torremolinos Protocol', '어선 안전 협약'];
-                        r.안전법 = ['원양 어선 안전 규칙'];
-                    } else {
-                        r.협약 = ['Torremolinos Protocol', '어선 안전 협약', 'ISM Code'];
-                        r.안전법 = ['원양 어선 안전 규칙'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.안전법 = ['연안 어선 안전 규칙', '소형 어선 안전 기준'];
-                    } else if (length < 100) {
-                        r.안전법 = ['연안 어선 안전 규칙', '어선법'];
-                    } else {
-                        r.협약 = ['Torremolinos Protocol'];
-                        r.안전법 = ['연안 어선 안전 규칙', '어선법'];
-                    }
-                }
-            }
-
-            // 요트 (Yacht)
-            else if (shipType === 'yacht') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['RCD (Recreational Craft Directive)'];
-                        r.안전법 = ['소형 선박 안전 기준'];
-                    } else if (length < 100) {
-                        r.협약 = ['RCD', 'SOLAS 일부 (자율 적용)'];
-                        r.선급 = ['ISO 소형 요트 기준'];
-                    } else {
-                        r.협약 = ['SOLAS 일부', 'ISM Code (자율)'];
-                        r.선급 = ['LY3 Code (대형 요트)'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.협약 = ['RCD'];
-                        r.안전법 = ['소형 선박 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['RCD'];
-                        r.안전법 = ['소형 선박 안전 규칙'];
-                    } else {
-                        r.선급 = ['LY3 Code'];
-                        r.안전법 = ['레저선박 안전 규칙'];
-                    }
-                }
-            }
-
-            // LNG선 (LNG Carrier)
-            else if (shipType === 'lng') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['SOLAS 기본 규정', 'IGC Code', 'MARPOL 협약'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code'];
-                    } else {
-                        r.협약 = ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
-                        r.선급 = ['가스운반선 특별 요구사항'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.협약 = ['IGC Code'];
-                        r.안전법 = ['연안 가스운반선 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['IGC Code', 'ISM Code'];
-                        r.안전법 = ['연안 가스운반선 안전 규칙'];
-                    } else {
-                        r.협약 = ['SOLAS 일부', 'IGC Code', 'ISM Code', 'MARPOL 협약'];
-                        r.안전법 = ['연안 가스운반선 안전 규칙'];
+                        r.선급 = ['Double Hull 요구사항'];
                     }
                 }
             }
@@ -1039,13 +906,8 @@
 
         function getShipTypeName(type) {
             const names = {
-                cargo: '화물선',
-                tanker: '탱커',
-                passenger: '여객선',
-                container: '컨테이너선',
-                fishing: '어선',
-                yacht: '요트',
-                lng: 'LNG선'
+                oiltanker: 'OIL TANKER',
+                oilchemicaltanker: 'OIL/CHEMICAL TANKER'
             };
             return names[type] || type;
         }
