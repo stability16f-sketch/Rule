@@ -474,7 +474,7 @@
                                 <option value="ocean">원양 (Ocean Going)</option>
                                 <option value="greatcoastal">근해 (Great Coastal)</option>
                                 <option value="coastal">연해 (Coastal)</option>
-                                <option value="freshwater">평수 (Freshwater)</option>
+                                <option value="freshwater">평수 (Fresh Water)</option>
                             </select>
                         </div>
                     </div>
@@ -626,162 +626,192 @@
             }
         }
 
-        // 선박 규칙을 반환하는 함수 (IF문 기반)
-        function getRules(shipType, voyageArea, length) {
-            // 항해구역 간소화 (greatcoastal도 coastal로 처리)
-            if (voyageArea === 'greatcoastal') {
-                voyageArea = 'coastal';
-            }
+        // 선박 규칙을 반환하는 함수 - {협약, 선급, 안전법} 객체 반환
+        function getRules(nationality, shipType, voyageArea, length, gt, dwt) {
+            const area = (voyageArea === 'greatcoastal') ? 'coastal' : voyageArea;
+            const r = { 협약: [], 선급: [], 안전법: [] };
 
             // 화물선 (Cargo Ship)
             if (shipType === 'cargo') {
-                if (voyageArea === 'ocean') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['SOLAS 기본 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약'];
+                        r.협약 = ['SOLAS 기본 규정', 'MARPOL 협약'];
+                        r.선급 = ['국제 화물선 안전 설비 규칙'];
                     } else if (length < 100) {
-                        return ['SOLAS 전체 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약', 'ISM Code'];
+                        r.협약 = ['SOLAS 전체 규정', 'MARPOL 협약', 'ISM Code'];
+                        r.선급 = ['국제 화물선 안전 설비 규칙'];
                     } else {
-                        return ['SOLAS 전체 규정', '국제 화물선 안전 설비 규칙', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
+                        r.협약 = ['SOLAS 전체 규정', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
+                        r.선급 = ['국제 화물선 안전 설비 규칙'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 화물선 안전 규칙', '선박 안전법'];
+                        r.안전법 = ['연안 화물선 안전 규칙', '선박 안전법'];
                     } else if (length < 100) {
-                        return ['연안 화물선 안전 규칙', '선박 안전법', 'MARPOL 일부 적용'];
+                        r.협약 = ['MARPOL 일부 적용'];
+                        r.안전법 = ['연안 화물선 안전 규칙', '선박 안전법'];
                     } else {
-                        return ['SOLAS 일부 규정', '연안 화물선 안전 규칙', 'MARPOL 협약'];
+                        r.협약 = ['SOLAS 일부 규정', 'MARPOL 협약'];
+                        r.안전법 = ['연안 화물선 안전 규칙'];
                     }
                 }
             }
 
             // 탱커 (Tanker)
-            if (shipType === 'tanker') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'tanker') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'IBC Code'];
+                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'IBC Code'];
                     } else if (length < 100) {
-                        return ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
+                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code', 'ISM Code'];
                     } else {
-                        return ['SOLAS 전체', 'MARPOL 전 부속서', 'IBC Code', 'ISM Code', 'ISPS Code', 'Double Hull 요구사항'];
+                        r.협약 = ['SOLAS 전체', 'MARPOL 전 부속서', 'IBC Code', 'ISM Code', 'ISPS Code'];
+                        r.선급 = ['Double Hull 요구사항'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 탱커 안전 규칙', 'MARPOL Annex I'];
+                        r.협약 = ['MARPOL Annex I'];
+                        r.안전법 = ['연안 탱커 안전 규칙'];
                     } else if (length < 100) {
-                        return ['연안 탱커 안전 규칙', 'MARPOL Annex I, II'];
+                        r.협약 = ['MARPOL Annex I, II'];
+                        r.안전법 = ['연안 탱커 안전 규칙'];
                     } else {
-                        return ['SOLAS 일부', 'MARPOL Annex I, II', 'ISM Code'];
+                        r.협약 = ['SOLAS 일부', 'MARPOL Annex I, II', 'ISM Code'];
+                        r.안전법 = ['연안 탱커 안전 규칙'];
                     }
                 }
             }
 
             // 여객선 (Passenger Ship)
-            if (shipType === 'passenger') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'passenger') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['SOLAS Chapter III (구명설비)', '여객선 안전 규칙', 'LSA Code'];
+                        r.협약 = ['SOLAS Chapter III (구명설비)', 'LSA Code'];
+                        r.안전법 = ['여객선 안전 규칙'];
                     } else if (length < 100) {
-                        return ['SOLAS 전체', '여객선 안전 규칙', 'LSA Code', 'ISM Code', 'Safe Return to Port'];
+                        r.협약 = ['SOLAS 전체', 'LSA Code', 'ISM Code', 'Safe Return to Port'];
+                        r.안전법 = ['여객선 안전 규칙'];
                     } else {
-                        return ['SOLAS 전체', '여객선 안전 규칙', 'LSA Code', 'ISM Code', 'ISPS Code', 'Safe Return to Port'];
+                        r.협약 = ['SOLAS 전체', 'LSA Code', 'ISM Code', 'ISPS Code', 'Safe Return to Port'];
+                        r.안전법 = ['여객선 안전 규칙'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 여객선 안전 규칙', '구명설비 규정'];
+                        r.선급 = ['구명설비 규정'];
+                        r.안전법 = ['연안 여객선 안전 규칙'];
                     } else if (length < 100) {
-                        return ['연안 여객선 안전 규칙', 'SOLAS Chapter III', 'ISM Code'];
+                        r.협약 = ['SOLAS Chapter III', 'ISM Code'];
+                        r.안전법 = ['연안 여객선 안전 규칙'];
                     } else {
-                        return ['SOLAS 일부 규정', '연안 여객선 안전 규칙', 'ISM Code'];
+                        r.협약 = ['SOLAS 일부 규정', 'ISM Code'];
+                        r.안전법 = ['연안 여객선 안전 규칙'];
                     }
                 }
             }
 
             // 컨테이너선 (Container Ship)
-            if (shipType === 'container') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'container') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['SOLAS 기본 규정', 'CSS Code (화물 고박)', 'IMDG Code'];
+                        r.협약 = ['SOLAS 기본 규정', 'CSS Code (화물 고박)', 'IMDG Code'];
                     } else if (length < 100) {
-                        return ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code'];
+                        r.협약 = ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code'];
                     } else {
-                        return ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code', 'ISPS Code', '대형 컨테이너선 안정성 규정'];
+                        r.협약 = ['SOLAS 전체', 'CSS Code', 'IMDG Code', 'ISM Code', 'ISPS Code'];
+                        r.선급 = ['대형 컨테이너선 안정성 규정'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 화물선 규칙', 'CSS Code'];
+                        r.협약 = ['CSS Code'];
+                        r.안전법 = ['연안 화물선 안전 규칙'];
                     } else if (length < 100) {
-                        return ['연안 화물선 규칙', 'CSS Code', 'IMDG Code'];
+                        r.협약 = ['CSS Code', 'IMDG Code'];
+                        r.안전법 = ['연안 화물선 안전 규칙'];
                     } else {
-                        return ['SOLAS 일부', 'CSS Code', 'IMDG Code', 'ISM Code'];
+                        r.협약 = ['SOLAS 일부', 'CSS Code', 'IMDG Code', 'ISM Code'];
+                        r.안전법 = ['연안 화물선 안전 규칙'];
                     }
                 }
             }
 
             // 어선 (Fishing Vessel)
-            if (shipType === 'fishing') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'fishing') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol'];
+                        r.협약 = ['Torremolinos Protocol'];
+                        r.안전법 = ['원양 어선 안전 규칙'];
                     } else if (length < 100) {
-                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol', '어선 안전 협약'];
+                        r.협약 = ['Torremolinos Protocol', '어선 안전 협약'];
+                        r.안전법 = ['원양 어선 안전 규칙'];
                     } else {
-                        return ['원양 어선 안전 규칙', 'Torremolinos Protocol', '어선 안전 협약', 'ISM Code'];
+                        r.협약 = ['Torremolinos Protocol', '어선 안전 협약', 'ISM Code'];
+                        r.안전법 = ['원양 어선 안전 규칙'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 어선 안전 규칙', '소형 어선 안전 기준'];
+                        r.안전법 = ['연안 어선 안전 규칙', '소형 어선 안전 기준'];
                     } else if (length < 100) {
-                        return ['연안 어선 안전 규칙', '어선법'];
+                        r.안전법 = ['연안 어선 안전 규칙', '어선법'];
                     } else {
-                        return ['연안 어선 안전 규칙', '어선법', 'Torremolinos Protocol'];
+                        r.협약 = ['Torremolinos Protocol'];
+                        r.안전법 = ['연안 어선 안전 규칙', '어선법'];
                     }
                 }
             }
 
             // 요트 (Yacht)
-            if (shipType === 'yacht') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'yacht') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['RCD (Recreational Craft Directive)', '소형 선박 안전 기준'];
+                        r.협약 = ['RCD (Recreational Craft Directive)'];
+                        r.안전법 = ['소형 선박 안전 기준'];
                     } else if (length < 100) {
-                        return ['RCD', 'SOLAS 일부 (자율 적용)', 'ISO 소형 요트 기준'];
+                        r.협약 = ['RCD', 'SOLAS 일부 (자율 적용)'];
+                        r.선급 = ['ISO 소형 요트 기준'];
                     } else {
-                        return ['LY3 Code (대형 요트)', 'SOLAS 일부', 'ISM Code (자율)'];
+                        r.협약 = ['SOLAS 일부', 'ISM Code (자율)'];
+                        r.선급 = ['LY3 Code (대형 요트)'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['소형 선박 안전 규칙', 'RCD'];
+                        r.협약 = ['RCD'];
+                        r.안전법 = ['소형 선박 안전 규칙'];
                     } else if (length < 100) {
-                        return ['소형 선박 안전 규칙', 'RCD'];
+                        r.협약 = ['RCD'];
+                        r.안전법 = ['소형 선박 안전 규칙'];
                     } else {
-                        return ['레저선박 안전 규칙', 'LY3 Code'];
+                        r.선급 = ['LY3 Code'];
+                        r.안전법 = ['레저선박 안전 규칙'];
                     }
                 }
             }
 
             // LNG선 (LNG Carrier)
-            if (shipType === 'lng') {
-                if (voyageArea === 'ocean') {
+            else if (shipType === 'lng') {
+                if (area === 'ocean') {
                     if (length < 24) {
-                        return ['SOLAS 기본 규정', 'IGC Code', 'MARPOL 협약'];
+                        r.협약 = ['SOLAS 기본 규정', 'IGC Code', 'MARPOL 협약'];
                     } else if (length < 100) {
-                        return ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code'];
+                        r.협약 = ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code'];
                     } else {
-                        return ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code', 'ISPS Code', '가스운반선 특별 요구사항'];
+                        r.협약 = ['SOLAS 전체', 'IGC Code', 'MARPOL 협약', 'ISM Code', 'ISPS Code'];
+                        r.선급 = ['가스운반선 특별 요구사항'];
                     }
-                } else if (voyageArea === 'coastal') {
+                } else if (area === 'coastal') {
                     if (length < 24) {
-                        return ['연안 가스운반선 안전 규칙', 'IGC Code'];
+                        r.협약 = ['IGC Code'];
+                        r.안전법 = ['연안 가스운반선 안전 규칙'];
                     } else if (length < 100) {
-                        return ['연안 가스운반선 안전 규칙', 'IGC Code', 'ISM Code'];
+                        r.협약 = ['IGC Code', 'ISM Code'];
+                        r.안전법 = ['연안 가스운반선 안전 규칙'];
                     } else {
-                        return ['SOLAS 일부', 'IGC Code', 'ISM Code', 'MARPOL 협약'];
+                        r.협약 = ['SOLAS 일부', 'IGC Code', 'ISM Code', 'MARPOL 협약'];
+                        r.안전법 = ['연안 가스운반선 안전 규칙'];
                     }
                 }
             }
 
-            // 해당 조건이 없는 경우
-            return [];
+            return r;
         }
 
         const descriptions = {
@@ -917,20 +947,20 @@
             const checkboxes = document.querySelectorAll('input[name="notation"]:checked');
             const notations = Array.from(checkboxes).map(cb => cb.value);
 
-            // IF문 기반 함수를 호출하여 적용 규칙 가져오기
-            const basicRules = getRules(shipType, voyageArea, length);
+            // 규칙 함수 호출 (협약/선급/안전법 분류)
+            const categorizedRules = getRules(nationality, shipType, voyageArea, length, gt, dwt);
 
             // 선급부호에 따른 추가 규칙 가져오기
             const notationRules = notations.length > 0 ? getNotationRules(notations) : [];
 
             // OUTPUT: 결과 표시
-            displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations, dwt, gt);
+            displayResults(categorizedRules, notationRules, nationality, shipType, voyageArea, length, notations, dwt, gt);
         });
 
-        function displayResults(basicRules, notationRules, nationality, shipType, voyageArea, length, notations = [], dwt = '', gt = '') {
+        function displayResults(categorizedRules, notationRules, nationality, shipType, voyageArea, length, notations = [], dwt = '', gt = '') {
             const resultDiv = document.getElementById('result');
             const resultContent = document.getElementById('resultContent');
-            const totalRules = basicRules.length + notationRules.length;
+            const totalRules = categorizedRules.협약.length + categorizedRules.선급.length + categorizedRules.안전법.length + notationRules.length;
 
             if (totalRules === 0) {
                 resultContent.innerHTML = '<p style="color: #ef4444;">해당 조건에 대한 규칙 정보가 없습니다.</p>';
@@ -943,56 +973,40 @@
                 if (dwt) html += `<span class="badge">DWT: ${Number(dwt).toLocaleString()}톤</span>`;
                 if (gt) html += `<span class="badge">GT: ${Number(gt).toLocaleString()}톤</span>`;
 
-                // 선급부호 표시
+                // 선급부호 배지 표시
                 if (notations.length > 0) {
                     const notationNames = {
-                        'ice': 'ICE',
-                        'LI': 'LI',
-                        'sps': 'SPS',
-                        'ip': 'IP',
-                        'sfv': 'SFV',
-                        'blu': 'BLU',
-                        'lngready': 'LNG Ready',
-                        'ammoniaready': 'Ammonia Ready',
-                        'methanolready': 'Methanol Ready',
-                        'ethanolready': 'Ethanol Ready',
-                        'ers': 'ERS',
-                        'nbs': 'NBS',
-                        'liqbc': 'LIQBC (1/2)',
-                        'csr': 'CSR'
+                        'ice': 'ICE', 'LI': 'LI', 'sps': 'SPS', 'ip': 'IP',
+                        'sfv': 'SFV', 'blu': 'BLU', 'lngready': 'LNG Ready',
+                        'ammoniaready': 'Ammonia Ready', 'methanolready': 'Methanol Ready',
+                        'ethanolready': 'Ethanol Ready', 'ers': 'ERS', 'nbs': 'NBS',
+                        'liqbc': 'LIQBC (1/2)', 'csr': 'CSR'
                     };
-                    notations.forEach(notation => {
-                        html += `<span class="badge" style="background: #059669;">${notationNames[notation]}</span>`;
+                    notations.forEach(n => {
+                        html += `<span class="badge" style="background: #059669;">${notationNames[n]}</span>`;
                     });
                 }
-
                 html += '</div>';
 
-                // 3컬럼 그리드 시작
-                html += '<div class="result-grid">';
-
-                // 기본 규칙 표시 (파란색)
-                basicRules.forEach(rule => {
-                    html += `
-                        <div class="result-item">
-                            <h4>✓ ${rule}</h4>
+                // 섹션 렌더링 헬퍼
+                function renderSection(title, icon, rules, borderColor, bgColor, titleColor) {
+                    if (rules.length === 0) return '';
+                    let s = `<h4 style="color: ${titleColor}; margin: 20px 0 10px; font-size: 16px; border-bottom: 2px solid ${borderColor}; padding-bottom: 8px;">${icon} ${title}</h4>`;
+                    s += '<div class="result-grid">';
+                    rules.forEach(rule => {
+                        s += `<div class="result-item" style="border-left: 4px solid ${borderColor}; background: ${bgColor};">
+                            <h4 style="color: ${titleColor};">✓ ${rule}</h4>
                             <p>${descriptions[rule] || '규칙 설명이 준비 중입니다.'}</p>
-                        </div>
-                    `;
-                });
+                        </div>`;
+                    });
+                    s += '</div>';
+                    return s;
+                }
 
-                // 선급부호 규칙 표시 (초록색)
-                notationRules.forEach(rule => {
-                    html += `
-                        <div class="result-item" style="border-left: 4px solid #10b981; background: #f0fdf4;">
-                            <h4 style="color: #059669;">✓ ${rule}</h4>
-                            <p>${descriptions[rule] || '규칙 설명이 준비 중입니다.'}</p>
-                        </div>
-                    `;
-                });
-
-                // 그리드 종료
-                html += '</div>';
+                html += renderSection('협약', '📜', categorizedRules.협약, '#3b82f6', '#eff6ff', '#1e40af');
+                html += renderSection('선급', '🏗️', categorizedRules.선급, '#7c3aed', '#faf5ff', '#6d28d9');
+                html += renderSection('안전법', '⚖️', categorizedRules.안전법, '#d97706', '#fffbeb', '#b45309');
+                html += renderSection('선급부호', '⚓', notationRules, '#10b981', '#f0fdf4', '#059669');
 
                 resultContent.innerHTML = html;
             }
