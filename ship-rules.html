@@ -811,6 +811,16 @@
                 }
             }
 
+            // 국적별 적용 규칙 필터링
+            // 순수외국적: 안전법 미적용
+            if (nationality === 'foreign') {
+                r.안전법 = [];
+            }
+            // 한국적: 국제항해(원양)가 아니면 협약 미적용
+            if (nationality === 'korean' && area !== 'ocean') {
+                r.협약 = [];
+            }
+
             return r;
         }
 
