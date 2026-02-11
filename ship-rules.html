@@ -457,7 +457,6 @@
                             <label for="shipType">선박의 종류</label>
                             <select id="shipType" required>
                                 <option value="">선택하세요</option>
-                                <option value="oiltanker">OIL TANKER</option>
                                 <option value="oilchemicaltanker">OIL/CHEMICAL TANKER</option>
                             </select>
                         </div>
@@ -626,34 +625,8 @@
             const area = (voyageArea === 'greatcoastal') ? 'coastal' : voyageArea;
             const r = { 협약: [], 선급: [], 안전법: [] };
 
-            // OIL TANKER
-            if (shipType === 'oiltanker') {
-                if (area === 'ocean') {
-                    if (length < 24) {
-                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)'];
-                    } else if (length < 100) {
-                        r.협약 = ['SOLAS 규정', 'MARPOL Annex I (유류오염방지)', 'ISM Code'];
-                    } else {
-                        r.협약 = ['SOLAS 전체', 'MARPOL Annex I (유류오염방지)', 'ISM Code', 'ISPS Code'];
-                        r.선급 = ['Double Hull 요구사항'];
-                    }
-                } else if (area === 'coastal') {
-                    if (length < 24) {
-                        r.협약 = ['MARPOL Annex I (유류오염방지)'];
-                        r.안전법 = ['연안 탱커 안전 규칙'];
-                    } else if (length < 100) {
-                        r.협약 = ['MARPOL Annex I (유류오염방지)'];
-                        r.안전법 = ['연안 탱커 안전 규칙', '선박 안전법'];
-                    } else {
-                        r.협약 = ['MARPOL Annex I (유류오염방지)', 'ISM Code'];
-                        r.안전법 = ['연안 탱커 안전 규칙'];
-                        r.선급 = ['Double Hull 요구사항'];
-                    }
-                }
-            }
-
             // OIL/CHEMICAL TANKER
-            else if (shipType === 'oilchemicaltanker') {
+            if (shipType === 'oilchemicaltanker') {
                 if (area === 'ocean') {
                     if (length < 24) {
                         r.협약 = ['SOLAS 규정', 'MARPOL Annex I, II', 'IBC Code'];
@@ -906,7 +879,6 @@
 
         function getShipTypeName(type) {
             const names = {
-                oiltanker: 'OIL TANKER',
                 oilchemicaltanker: 'OIL/CHEMICAL TANKER'
             };
             return names[type] || type;
