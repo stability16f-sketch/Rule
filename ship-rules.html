@@ -635,12 +635,23 @@
                 if (isInternational) {
 
                     // MARPOL Annex I·II: 150 GT 또는 150 DWT 이상 탱커
-                    if (gtNum >= 150 || dwtNum >= 150) {
-                        r.협약.push('MARPOL Annex I, II');
+                    // 총톤수 150 이상 손상복원성
+                    // 총톤수 400 이상 EEDI 
+                    if (gtNum >= 150 && dwtNum >= 5000) {
+                        r.협약.push('복원성 관련, 5000 up'); //손상복원성 + WORST + ERS
+
+                    } else if (gtNum >= 150 && dwtNum <5000 ) {         
+                        r.협약.push('복원성 관련, 5000 dn');
+                    }
+                    
+                    if (dwtNum >= 20000) {
+                        r.협약.push('SBT, 20000 DWT');
                     }
 
-                    // IBC Code: 화학탱커 필수
-                    r.협약.push('IBC Code');
+                    // 길이 150m 이상 B보다 작은 건현의 탱커일 경우 ICLL
+                    if (length >= 150) {
+                        r.협약.push('ICLL Damage');
+                    }
 
                     // SOLAS·ISM·ISPS: GT 기준으로 적용 범위 결정
                     if (gtNum >= 500 || length >= 100) {
@@ -665,16 +676,53 @@
                     r.선급.push('CSR 관련');
                 }
 
+
+
+
+
+
+
+
+
                 // ── 안전법 (한국 국내 법규) ──────────────────────────────
                 // 선박안전법: 24m 이상 선박
-                if (length >= 24) {
-                    r.안전법.push('선박 안전법');
+                if (length >= 24 && dwtNum >=5000) 
+                {
+                    r.안전법.push('복원성 관련, 5000 상');
+                    if (voyageArea === 'ocean' || voyageArea === 'greatcoastal')
+                    {
+                        r.안전법.push('탱커 손상복원성'); //국제항해
+                        if (gtNum >=400){
+                            r.안전법.push('EEDI')
+                        }
+                    }
+                } else if (length >= 24 && dwtNum < 5000)
+                {
+                    r.안전법.push('복원성 관련, 5000 하');
+                    if (voyageArea === 'ocean' || voyageArea === 'greatcoastal')
+                    {
+                        r.안전법.push('탱커 손상복원성'); //국제항해
+                        if (gtNum >=400){
+                            r.안전법.push('EEDI')
+                        }
+                    }
                 }
+
+            
+
+
+
+
                 // 연안 탱커 규칙: 연해·평수 구역
-                if (voyageArea === 'coastal' || voyageArea === 'freshwater') {
-                    r.안전법.push('연안 탱커 안전 규칙');
-                }
+//            /if (voyageArea === 'coastal' || voyageArea === 'freshwater') {
+//                    r.안전법.push('연안 탱커 안전 규칙');
+//                }
             }
+
+
+
+
+
 
             // ── 국적별 필터링 ────────────────────────────────────────────
             // 순수외국적: 한국 안전법 미적용
@@ -690,6 +738,16 @@
         }
 
         const descriptions = {
+            '복원성 관련, 5000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
+            '복원성 관련, 5000 dn': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)',
+            'SBT, 20000 DWT': 'MARPOL Annex1, Ch.4, Reg.18 (SBT)',
+            'ICLL Damage' : '길이 150m 이상 B형 건현보다 작은 경우<br> ICLL Reg.27',
+            '탱커 손상복원성' : '선박에서의오염방지에 관한 규칙 제 15조 제3항 제6호 별표14 (손상복원성)',
+            '복원성 관련, 5000 상': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)<br> 오방규칙 제 25조 제 2항 제7호 (ERS)',
+            '복원성 관련, 5000 하': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)',
+            'EEDI' : '해양환경관리법 제 4장 제41조의2',
+
+
             'SOLAS 기본 규정': '선박의 안전을 위한 국제 협약의 기본 요구사항',
             'SOLAS 전체 규정': '선박의 안전에 관한 국제 협약 전체 챕터 적용',
             'SOLAS 전체': '선박의 안전에 관한 국제 협약 전체 챕터 적용',
@@ -705,8 +763,11 @@
             'Torremolinos Protocol': '어선 안전 국제 협약',
             'RCD': '레저선박 지침',
             'LY3 Code': '대형 요트 규칙',
+            
             'Double Hull 요구사항': '이중선체 구조 요구사항',
-            '선박 안전법': '국내 선박 안전에 관한 법률',
+            '선박 안전법': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준',
+
+
             '연안 화물선 안전 규칙': '연안을 항해하는 화물선의 안전 기준',
             '연안 탱커 안전 규칙': '연안을 항해하는 탱커의 안전 기준',
             '연안 여객선 안전 규칙': '연안을 항해하는 여객선의 안전 기준',
@@ -740,9 +801,7 @@
 
             'ICE 관련': '빙해운항선박 지침 제 2절',
             'Polar Code': '극지 운항 선박에 대한 안전 및 환경보호 규칙',
-
             'LI 관련': 'UR L5에 따라 TEST REPORT 승인',
-
             'SPS Code': '특수목적선 안전 규칙 (Special Purpose Ship Code)',
             'IP Code': '산업인력 운송선박 안전 규칙 (Industrial Personnel Code)',
             'SFV Protocol': '어선 안전을 위한 토레몰리노스 의정서 (Torremolinos Protocol for Safety of Fishing Vessels)',
