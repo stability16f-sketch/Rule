@@ -635,8 +635,7 @@
                 if (isInternational) {
 
                     // MARPOL Annex I·II: 150 GT 또는 150 DWT 이상 탱커
-                    // 총톤수 150 이상 손상복원성
-                    // 총톤수 400 이상 EEDI 
+                    // 복원성관련
                     if (gtNum >= 150 && dwtNum >= 20000) 
                     {
                         r.협약.push('복원성 관련, 20000 up');//손상복원성 + SBT + WORST + LI + ERS
@@ -653,8 +652,14 @@
 
                     // 길이 150m 이상 B보다 작은 건현의 탱커일 경우 ICLL
                     if (length >= 150) {
-                        r.협약.push('ICLL Damage');
+                        r.협약.push('ICLL, Type A 150 up');
+                    } else if (length >=24){
+                        r.협약.push('ICLL');
                     }
+
+                    // 구조 및 설비에 관한 사항
+                    //if 
+
 
                     // SOLAS·ISM·ISPS: GT 기준으로 적용 범위 결정
                     if (gtNum >= 500 || length >= 100) {
@@ -736,20 +741,32 @@
             if (nationality === 'korean' && !isInternational) {
                 r.협약 = [];
             }
+            if (gtNum <150 || length <24){
+                r.협약 = [];
+            }
+
+        
 
             return r;
         }
 
         const descriptions = {
-            '복원성 관련, 20000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4, Reg.18 (SBT)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
-            '복원성 관련, 5000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
-            '복원성 관련, 5000 dn': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)',
-            'SBT, 20000 DWT': 'MARPOL Annex1, Ch.4, Reg.18 (SBT)',
-            'ICLL Damage' : '길이 150m 이상 B형 건현보다 작은 경우<br> ICLL Reg.27',
+            //OIL/CHEMICAL 협약
+            '복원성 관련, 20000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4, Reg.18 (SBT)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br> SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
+            '복원성 관련, 5000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
+            '복원성 관련, 5000 dn': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)',
+            'ICLL, Type A 150 up' : 'Freeboard Calculation<br> <span style="color:red;">길이 150m 이상 B형 건현보다 작은 A형 선박은<br> ICLL Reg.27 (Damage)</span><br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
+            //국제항해 ICLL 공통적용
+            'ICLL' : 'Freeboard Calculation<br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
+        
+            // OIL/CHEMICAL 
             '탱커 손상복원성' : '오방규칙 제 15조 제3항 제6호 별표14 (손상복원성)',
             '복원성 관련, 5000 상': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)<br> 오방규칙 제 25조 제 2항 제7호 (ERS)',
             '복원성 관련, 5000 하': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)',
             'EEDI' : '해양환경관리법 제 4장 제41조의2',
+            
+            '이중선체 및 이중저': 'MARPOL Annex1, Ch.4, Reg.19',
+
 
 
             'SOLAS 기본 규정': '선박의 안전을 위한 국제 협약의 기본 요구사항',
