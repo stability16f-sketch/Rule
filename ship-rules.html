@@ -372,6 +372,11 @@
             margin-bottom: 10px;
         }
 
+        .form-col {
+            display: flex;
+            flex-direction: column;
+        }
+
         @media (max-width: 600px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -633,7 +638,6 @@
 
                 // ── 협약 (국제항해 시 적용) ──────────────────────────────
                 if (isInternational) {
-
                     // MARPOL Annex I·II: 150 GT 또는 150 DWT 이상 탱커
                     // 복원성관련
                     if (gtNum >= 150 && dwtNum >= 20000) 
@@ -649,47 +653,40 @@
                         r.협약.push('복원성 관련, 5000 dn'); // 손상복원성 + LI
                     }
                     
-
                     // 길이 150m 이상 B보다 작은 건현의 탱커일 경우 ICLL
                     if (length >= 150) {
                         r.협약.push('ICLL, Type A 150 up');
                     } else if (length >=24){
                         r.협약.push('ICLL');
                     }
+                    // EEDI
+                    if (gtNum >=400){
+                        r.협약.push('EEDI, TANKER');
+                    }
 
                     // 구조 및 설비에 관한 사항
-                    //if 
-
-
-                    // SOLAS·ISM·ISPS: GT 기준으로 적용 범위 결정
-                    if (gtNum >= 500 || length >= 100) {
-                        // 대형: SOLAS 전 챕터 + ISM + ISPS
-                        r.협약.push('SOLAS 전체', 'ISM Code', 'ISPS Code');
-                    } else if (gtNum >= 300 || length >= 24) {
-                        // 중형: SOLAS 주요 챕터 + ISM
-                        r.협약.push('SOLAS 규정', 'ISM Code');
-                    } else {
-                        // 소형: SOLAS 일부 챕터
-                        r.협약.push('SOLAS 일부 규정');
+                    r.협약.push('구조 및 설비 (탱커)');
+                    if (gtNum >= 600){
+                        r.협약.push('이중선체 및 이중저');
                     }
+                    if (length>=55){
+                        r.협약.push('Visibility');
+                    }
+
                 }
 
-                // ── 선급 (구조 기준에 따른 선급 규칙) ───────────────────
-                // Double Hull: 5,000 DWT 이상 유조선 (MARPOL Annex I Reg.19)
-                if (dwtNum >= 5000) {
-                    r.선급.push('Double Hull 요구사항');
-                }
+                // ── 선급 (구조 기준에 따른 선급 규칙) ────────────
                 // CSR: 150m 이상 탱커 (IACS Common Structural Rules)
                 if (length >= 150) {
-                    r.선급.push('CSR 관련');
+                    r.선급.push('CSR, TANKER');
+                } else if (length <150 && length>=90){
+                    r.선급.push('UR S11');
                 }
 
-
-
-
-
-
-
+                // EEDI : 국제항해 + 400톤이상
+                if (isInternational && gtNum >= 400){
+                    r.선급.push('EEDI, 선급');
+                }
 
 
                 // ── 안전법 (한국 국내 법규) ──────────────────────────────
@@ -731,7 +728,6 @@
 
 
 
-
             // ── 국적별 필터링 ────────────────────────────────────────────
             // 순수외국적: 한국 안전법 미적용
             if (nationality === 'foreign') {
@@ -745,8 +741,6 @@
                 r.협약 = [];
             }
 
-        
-
             return r;
         }
 
@@ -756,6 +750,7 @@
             '복원성 관련, 5000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
             '복원성 관련, 5000 dn': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)',
             'ICLL, Type A 150 up' : 'Freeboard Calculation<br> <span style="color:red;">길이 150m 이상 B형 건현보다 작은 A형 선박은<br> ICLL Reg.27 (Damage)</span><br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
+            'EEDI, TANKER' : 'MARPOL Annex6, Ch.4, Reg.20, 21 (EEDI, MPP)<br> MEPC.Circ.364, 365 (EEDI)<br> MEPC.Circ.850 (MPP)<br> ISO15016-2025',
             //국제항해 ICLL 공통적용
             'ICLL' : 'Freeboard Calculation<br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
         
@@ -764,8 +759,16 @@
             '복원성 관련, 5000 상': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)<br> 오방규칙 제 25조 제 2항 제7호 (ERS)',
             '복원성 관련, 5000 하': '선박복원성기준 제 4장 (화물선)<br> 선박만재흘수선기준<br> 선박복원성기준 별표1 (경사시험)',
             'EEDI' : '해양환경관리법 제 4장 제41조의2',
-            
+            '구조 및 설비 (탱커)' : 'MARPOL Annex1, Ch.3, Reg.12A (연료유)<br> MARPOL Annex1, Ch.4, Reg.23 (사고로 인한 기름유출비율)<br> SOLAS Ch.2-1, Pt.B-2, Reg.12 (선수미, 기관구역 격벽)',
             '이중선체 및 이중저': 'MARPOL Annex1, Ch.4, Reg.19',
+            'Visibility': 'SOLAS Ch.5, Reg.21 (Visibility)',
+
+            //선급
+            'CSR, TANKER' : 'CSR Ch.4 Sec.8 (적하지침)<br> KR RULE 13편 1부 4장 제 8절',
+            'UR S11' : 'Longitudinal Strength Standard',
+            
+            'EEDI, 선급' : '협약검사내규 5-1편 선박의 에너지효율 검사지침<br> IACS. PR.38',
+
 
 
 
