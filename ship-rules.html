@@ -661,7 +661,8 @@
                     }
                     // EEDI
                     if (gtNum >=400){
-                        r.협약.push('EEDI, TANKER');
+                        r.협약.push('EEDI (TANKER, BULK)');
+                        r.선급.push('EEDI, 선급');
                     }
 
                     // 구조 및 설비에 관한 사항
@@ -673,6 +674,13 @@
                         r.협약.push('Visibility');
                     }
 
+                    // 적하지침서 및 적하지침 기기
+                    if (length >= 100){
+                        r.선급.push('적하지침기기');
+                        r.선급.push('적하지침서');
+                    } else if (length <100 && length>=65){
+                        r.선급.push('적하지침서')
+                    }
                 }
 
                 // ── 선급 (구조 기준에 따른 선급 규칙) ────────────
@@ -682,12 +690,9 @@
                 } else if (length <150 && length>=90){
                     r.선급.push('UR S11');
                 }
-
-                // EEDI : 국제항해 + 400톤이상
-                if (isInternational && gtNum >= 400){
-                    r.선급.push('EEDI, 선급');
-                }
-
+                r.선급.push('경사시험 절차');
+            
+                
 
                 // ── 안전법 (한국 국내 법규) ──────────────────────────────
                 // 선박안전법: 24m 이상 선박
@@ -750,7 +755,7 @@
             '복원성 관련, 5000 up': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.27 (Worst)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)<br> MARPOL Annex1, Ch.5 Reg.37 (ERS)',
             '복원성 관련, 5000 dn': '2008 IS CODE (복원성, 경사시험)<br> MARPOL Annex1, Ch.4 Reg.28 (Damage)<br> IBC 2004 Amend Annex Ch.2 (Damage)<br> MSC.Circ.1461 (EMDG)<br> SOLAS Ch.2-1 Part.B-1 Reg.5 (경사시험)<br>SOLAS Ch.2-1 Part B-4 Reg.19 (손상제어 자료)<br> MARPOL Annex1, Ch.4 Reg.28.6 (LI)',
             'ICLL, Type A 150 up' : 'Freeboard Calculation<br> <span style="color:red;">길이 150m 이상 B형 건현보다 작은 A형 선박은<br> ICLL Reg.27 (Damage)</span><br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
-            'EEDI, TANKER' : 'MARPOL Annex6, Ch.4, Reg.20, 21 (EEDI, MPP)<br> MEPC.Circ.364, 365 (EEDI)<br> MEPC.Circ.850 (MPP)<br> ISO15016-2025',
+            'EEDI (TANKER, BULK)' : 'MARPOL Annex6, Ch.4, Reg.20, 21 (EEDI, MPP)<br> MEPC.Circ.364, 365 (EEDI)<br> MEPC.Circ.850 (MPP)<br> ISO15016-2025',
             //국제항해 ICLL 공통적용
             'ICLL' : 'Freeboard Calculation<br> Reg.14-1 Hatch<br> Reg.17 기관구역 개구<br> Reg.18 Door<br> Reg.19 통풍통<br> Reg.20 공기관<br> Reg.23 현창,창문, 천창',
         
@@ -764,10 +769,13 @@
             'Visibility': 'SOLAS Ch.5, Reg.21 (Visibility)',
 
             //선급
-            'CSR, TANKER' : 'CSR Ch.4 Sec.8 (적하지침)<br> KR RULE 13편 1부 4장 제 8절',
+            'CSR, TANKER' : 'CSR Ch.4 Sec.8 (적하지침서)<br> KR RULE 13편 1부 4장 제 8절',
             'UR S11' : 'Longitudinal Strength Standard',
             
             'EEDI, 선급' : '협약검사내규 5-1편 선박의 에너지효율 검사지침<br> IACS. PR.38',
+            '적하지침기기' : 'KR RULE 3편 제 3장 제 1절 (적하지침기기)',
+            '적하지침서' : 'KR RULE 3편 제 3장 제 1절 (적하지침서)',
+            '경사시험 절차' : 'IACS. Rec.31',
 
 
 
