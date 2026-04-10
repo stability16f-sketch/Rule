@@ -442,6 +442,7 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('rules')">🔍 규칙 검색</button>
                 <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
+                <button class="tab-btn" onclick="switchTab('hullform')">⚓ Hull Form PDF → TXT</button>
             </div>
 
             <!-- 규칙 검색 탭 -->
@@ -601,8 +602,270 @@
                     <canvas id="interpolationChart"></canvas>
                 </div>
             </div>
+
+            <!-- Hull Form PDF → TXT 탭 -->
+            <div id="hullformTab" class="tab-content">
+                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">⚓ Hull Form PDF / TXT → TXT</h2>
+                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">HULL FORM DATA PDF 또는 TXT를 업로드하면 섹션별 XYZ 좌표를 TXT 파일로 추출합니다</p>
+
+                <!-- Upload -->
+                <div class="form-group">
+                    <label>📂 파일 업로드 (PDF / TXT)</label>
+                    <div id="hf-dropzone" style="border:2px dashed #e5e7eb; border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#f8fafc;">
+                        <input type="file" id="hf-fileInput" accept=".pdf,.txt" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
+                        <div style="font-size:2rem; margin-bottom:10px;">📄</div>
+                        <div style="font-size:0.9rem; color:#64748b;">파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
+                        <div id="hf-fileName" style="margin-top:10px; font-family:monospace; font-size:0.78rem; color:#10b981; display:none;"></div>
+                    </div>
+                    <div id="hf-progressWrap" style="display:none; margin-top:14px;">
+                        <div style="height:4px; background:#e5e7eb; border-radius:99px; overflow:hidden;">
+                            <div id="hf-progressFill" style="height:100%; background:linear-gradient(90deg,#3b82f6,#10b981); border-radius:99px; width:0%; transition:width 0.3s;"></div>
+                        </div>
+                        <div id="hf-progressText" style="font-family:monospace; font-size:0.72rem; color:#64748b; margin-top:6px;">처리 중...</div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div id="hf-stats" style="display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                        <div id="hf-statSections" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">섹션</div>
+                    </div>
+                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                        <div id="hf-statPoints" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">총 좌표점</div>
+                    </div>
+                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                        <div id="hf-statSheets" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">시트 수</div>
+                    </div>
+                </div>
+
+                <div id="hf-sectionsList" style="display:none; margin-bottom:14px;"></div>
+
+                <button class="search-btn" id="hf-parseBtn" onclick="hfParsePDF()" style="display:none;">🔍 좌표 추출 시작</button>
+
+                <!-- Preview -->
+                <div class="form-group" style="margin-top:20px;">
+                    <label>👁 TXT 미리보기</label>
+                    <div id="hf-previewBox" style="display:none; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:180px; overflow-y:auto; font-family:monospace; font-size:0.72rem; color:#334155; white-space:pre;"></div>
+                </div>
+
+                <!-- Log -->
+                <div class="form-group">
+                    <label>🖥 처리 로그</label>
+                    <div id="hf-logBox" style="display:none; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:120px; overflow-y:auto; font-family:monospace; font-size:0.72rem; color:#64748b;"></div>
+                </div>
+
+                <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
+            </div>
         </div>
     </div>
+
+    <script>
+    // Hull Form 전용 스크립트
+    (function() {
+        const dz = document.getElementById('hf-dropzone');
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='#3b82f6'; dz.style.background='rgba(59,130,246,0.05)'; });
+        dz.addEventListener('dragleave', () => { dz.style.borderColor='#e5e7eb'; dz.style.background='#f8fafc'; });
+        dz.addEventListener('drop', e => {
+            e.preventDefault(); dz.style.borderColor='#e5e7eb'; dz.style.background='#f8fafc';
+            const f = e.dataTransfer.files[0];
+            if (f) hfHandleFile(f);
+        });
+        document.getElementById('hf-fileInput').addEventListener('change', e => {
+            if (e.target.files[0]) hfHandleFile(e.target.files[0]);
+        });
+    })();
+
+    let hfParsedData = null;
+    let hfGeneratedTxt = '';
+
+    function hfHandleFile(file) {
+        const isTxt = file.name.toLowerCase().endsWith('.txt');
+        const isPdf = file.name.toLowerCase().endsWith('.pdf');
+        if (!isPdf && !isTxt) { hfLog('PDF 또는 TXT 파일만 지원합니다', 'err'); return; }
+        document.getElementById('hf-fileName').textContent = '📎 ' + file.name;
+        document.getElementById('hf-fileName').style.display = 'block';
+        document.getElementById('hf-parseBtn').style.display = 'block';
+        document.getElementById('hf-logBox').style.display = 'block';
+        hfLog('파일 선택됨: ' + file.name, 'info');
+        window._hfSelectedFile = file;
+    }
+
+    function hfLog(msg, type) {
+        const box = document.getElementById('hf-logBox');
+        const line = document.createElement('div');
+        const colors = { ok: '#10b981', err: '#ef4444', info: '#3b82f6', '': '#64748b' };
+        line.style.color = colors[type || ''] || '#64748b';
+        line.style.marginBottom = '3px';
+        line.textContent = '> ' + msg;
+        box.appendChild(line);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function hfSetProgress(pct, txt) {
+        document.getElementById('hf-progressWrap').style.display = 'block';
+        document.getElementById('hf-progressFill').style.width = pct + '%';
+        document.getElementById('hf-progressText').textContent = txt;
+    }
+
+    async function hfParsePDF() {
+        const file = window._hfSelectedFile;
+        if (!file) return;
+        document.getElementById('hf-parseBtn').disabled = true;
+        hfParsedData = null; hfGeneratedTxt = '';
+
+        let fullText = '';
+        if (file.name.toLowerCase().endsWith('.txt')) {
+            hfLog('TXT 파일 로딩 중...', 'info');
+            hfSetProgress(10, 'TXT 불러오는 중...');
+            fullText = await file.text();
+            hfSetProgress(60, '텍스트 읽기 완료...');
+            hfLog('텍스트 읽기 완료, 섹션 분석 중...', 'info');
+        } else {
+            hfLog('PDF 로딩 중...', 'info');
+            hfSetProgress(10, 'PDF 불러오는 중...');
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            hfLog('총 ' + pdf.numPages + '페이지 감지', 'ok');
+            hfSetProgress(20, '텍스트 추출 중...');
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                fullText += '\n' + content.items.map(it => it.str).join(' ');
+                hfSetProgress(20 + Math.round((i / pdf.numPages) * 40), '페이지 ' + i + '/' + pdf.numPages + ' 추출 중...');
+            }
+            hfLog('텍스트 추출 완료, 섹션 분석 중...', 'info');
+        }
+
+        hfSetProgress(65, '섹션 파싱 중...');
+        const sections = hfParseHullFormText(fullText);
+        hfParsedData = sections;
+
+        const totalPoints = Object.values(sections).reduce((s, v) => {
+            if (Array.isArray(v)) return s + v.length;
+            return s + Object.values(v).reduce((a, b) => a + b.length, 0);
+        }, 0);
+        const sheetCount = Object.keys(sections).length;
+
+        hfSetProgress(85, 'TXT 생성 중...');
+        hfGeneratedTxt = hfBuildTXT(sections, file.name);
+        hfSetProgress(100, '완료!');
+        hfLog('섹션 ' + sheetCount + '개 감지됨', 'ok');
+        hfLog('총 좌표점 ' + totalPoints + '개 추출됨', 'ok');
+        hfLog('TXT 파일 생성 완료', 'ok');
+
+        document.getElementById('hf-statSections').textContent = sheetCount;
+        document.getElementById('hf-statPoints').textContent = totalPoints;
+        document.getElementById('hf-statSheets').textContent = sheetCount;
+        document.getElementById('hf-stats').style.display = 'grid';
+
+        const list = document.getElementById('hf-sectionsList');
+        list.style.display = 'block'; list.innerHTML = '';
+        for (const [name, data] of Object.entries(sections)) {
+            const cnt = Array.isArray(data) ? data.length : Object.values(data).reduce((a,b)=>a+b.length,0);
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f0f9ff; border-radius:6px; margin-bottom:6px; font-size:0.82rem;';
+            item.innerHTML = '<span>' + name + '</span><span style="font-family:monospace;font-size:0.7rem;padding:2px 8px;border-radius:99px;background:rgba(59,130,246,0.15);color:#3b82f6;">' + cnt + '점</span>';
+            list.appendChild(item);
+        }
+
+        const preview = document.getElementById('hf-previewBox');
+        preview.style.display = 'block';
+        preview.textContent = hfGeneratedTxt.split('\n').slice(0, 40).join('\n') + '\n...(이하 생략)';
+
+        document.getElementById('hf-downloadBtn').style.display = 'block';
+        document.getElementById('hf-parseBtn').disabled = false;
+    }
+
+    function hfParseHullFormText(text) {
+        const sections = {};
+        text = text.replace(/\s+/g, ' ');
+        const coordRe = /\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)/g;
+        const sectionRe = /(\d+)\.\s+(STERN PROFILE|STEM PROFILE|SIDE TANGENT LINE|BOTTOM TANGENT LINE|STATION PLAN)/gi;
+        const sectionMatches = [...text.matchAll(sectionRe)];
+
+        if (sectionMatches.length === 0) {
+            hfLog('표준 섹션 헤더를 찾지 못했습니다. 전체 좌표를 단일 섹션으로 추출합니다.', 'err');
+            const allCoords = [...text.matchAll(coordRe)].map(m => [+m[1], +m[2], +m[3]]);
+            if (allCoords.length > 0) sections['ALL COORDINATES'] = allCoords;
+            return sections;
+        }
+
+        for (let i = 0; i < sectionMatches.length; i++) {
+            const match = sectionMatches[i];
+            const name = match[1] + '. ' + match[2].toUpperCase();
+            const start = match.index + match[0].length;
+            const end = i + 1 < sectionMatches.length ? sectionMatches[i+1].index : text.length;
+            const chunk = text.slice(start, end);
+
+            if (match[2].toUpperCase() === 'STATION PLAN') {
+                const stationRe = /X\s*=\s*(\d+\.?\d*)\s*m/gi;
+                const stationMatches = [...chunk.matchAll(stationRe)];
+                const stationData = {};
+                for (let j = 0; j < stationMatches.length; j++) {
+                    const sm = stationMatches[j];
+                    const sStart = sm.index + sm[0].length;
+                    const sEnd = j + 1 < stationMatches.length ? stationMatches[j+1].index : chunk.length;
+                    const coords = [...chunk.slice(sStart, sEnd).matchAll(coordRe)].map(m => [+m[1], +m[2], +m[3]]);
+                    if (coords.length > 0) stationData['X=' + sm[1] + 'm'] = coords;
+                }
+                sections[name] = stationData;
+                hfLog('"' + name + '": 스테이션 ' + Object.keys(stationData).length + '개 파싱', 'ok');
+            } else {
+                const coords = [...chunk.matchAll(coordRe)].map(m => [+m[1], +m[2], +m[3]]);
+                sections[name] = coords;
+                hfLog('"' + name + '": ' + coords.length + '개 좌표 파싱', 'ok');
+            }
+        }
+        return sections;
+    }
+
+    function hfBuildTXT(sections, filename) {
+        const SEP  = '='.repeat(60);
+        const DASH = '-'.repeat(60);
+        const HDR  = 'X (m)          Y (m)          Z (m)         ';
+        const fmt  = n => n.toFixed(3).padStart(14);
+        const lines = [];
+
+        lines.push('HULL FORM DATA');
+        lines.push('Source: ' + filename);
+        lines.push('Extracted: ' + new Date().toLocaleString('ko-KR'));
+        lines.push('');
+
+        for (const [sectionName, data] of Object.entries(sections)) {
+            if (Array.isArray(data)) {
+                lines.push(SEP); lines.push(sectionName); lines.push(SEP);
+                lines.push(HDR); lines.push(DASH);
+                data.forEach(([x, y, z]) => lines.push(fmt(x) + fmt(y) + fmt(z)));
+                lines.push('');
+            } else {
+                for (const [station, coords] of Object.entries(data)) {
+                    lines.push(SEP);
+                    lines.push(sectionName + '  /  Station ' + station);
+                    lines.push(SEP); lines.push(HDR); lines.push(DASH);
+                    coords.forEach(([x, y, z]) => lines.push(fmt(x) + fmt(y) + fmt(z)));
+                    lines.push('');
+                }
+            }
+        }
+        return lines.join('\n');
+    }
+
+    function hfDownloadTXT() {
+        if (!hfGeneratedTxt) { hfLog('먼저 PDF를 파싱하세요', 'err'); return; }
+        const blob = new Blob([hfGeneratedTxt], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Hull_Form_Data.txt'; a.click();
+        URL.revokeObjectURL(url);
+        hfLog('TXT 파일 다운로드 시작!', 'ok');
+    }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <script>
         // 탭 전환 함수
@@ -622,6 +885,9 @@
             } else if (tabName === 'interpolation') {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('interpolationTab').classList.add('active');
+            } else if (tabName === 'hullform') {
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('hullformTab').classList.add('active');
             }
         }
 
