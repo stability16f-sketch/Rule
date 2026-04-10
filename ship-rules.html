@@ -801,7 +801,7 @@
             const chunk = text.slice(start, end);
 
             if (match[2].toUpperCase() === 'STATION PLAN') {
-                const stationRe = /X\s*=\s*(\d+\.?\d*)\s*m/gi;
+                const stationRe = /X\s*=\s*(-?\d+\.?\d*)\s*m/gi;
                 const stationMatches = [...chunk.matchAll(stationRe)];
                 const stationData = {};
                 for (let j = 0; j < stationMatches.length; j++) {
