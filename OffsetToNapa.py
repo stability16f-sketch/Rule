@@ -372,8 +372,7 @@ def _stm_xs_at_z(wl_z: float, side_points) -> list[float]:
 
 
 def to_waterlines(stations: dict, side_points, cbm_max_z: float,
-                  step: float = 1.0, cbm_first_x: float = None,
-                  cbm_first_z_min: float = None) -> list[str]:
+                  step: float = 1.0, cbm_first_z_min: float = None) -> list[str]:
     """
     Z = step 단위로 cbm_max_z 까지 WATER LINE 생성.
     각 WL에는 해당 Z가 Station의 Z 범위 내에 있는 Station만 포함.
@@ -435,10 +434,8 @@ def to_waterlines(stations: dict, side_points, cbm_max_z: float,
 
         # 이름 목록 조합 (인접 STM 사이에 /- -/ 삽입)
         names = []
-        # 첫 Station X == cbm_first_x 이고 WL_Z >= cbm_first_z_min 이면 CBM /- -/ ST...
-        if (cbm_first_x is not None
-                and abs(items[0][0] - cbm_first_x) < TOL
-                and (cbm_first_z_min is None or wl_z >= cbm_first_z_min - TOL)):
+        # CBM이 cbm_first_x에서 유효한 Z 범위(>= cbm_first_z_min) 내이면 CBM /- -/ ST...
+        if cbm_first_z_min is not None and wl_z >= cbm_first_z_min - TOL:
             names.append("/- -/")
         for i, (_, name) in enumerate(items):
             if i > 0 and name.startswith("STM/") and items[i-1][1].startswith("STM/"):
@@ -531,7 +528,7 @@ def convert(input_path: str, output_path: str | None = None) -> None:
     wl_list = []
     if cbm_max_z:
         wl_list = to_waterlines(stations, side, cbm_max_z,
-                                cbm_first_x=cbm_first_x, cbm_first_z_min=cbm_first_z_min)
+                                cbm_first_z_min=cbm_first_z_min)
         for wl in wl_list:
             out_lines.append(wl)
             out_lines.append("")

@@ -1086,7 +1086,7 @@
             return xs.filter(x => { const k = Math.round(x*1e4); if (seen.has(k)) return false; seen.add(k); return true; });
         }
 
-        function to_waterlines(stations, sp, cbm_max_z, step, cbm_first_x, cbm_first_z_min) {
+        function to_waterlines(stations, sp, cbm_max_z, step, cbm_first_z_min) {
             step = step || 1.0;
             if (!cbm_max_z) return [];
             const wl_zs = [];
@@ -1119,8 +1119,7 @@
                 if (!items.length) return curves;
                 items.sort((a,b) => a[0]-b[0]);
                 const names = [];
-                if (cbm_first_x != null && Math.abs(items[0][0] - cbm_first_x) < TOL
-                        && (cbm_first_z_min == null || wl_z >= cbm_first_z_min - TOL)) names.push("/- -/");
+                if (cbm_first_z_min != null && wl_z >= cbm_first_z_min - TOL) names.push("/- -/");
                 items.forEach(([,name],i) => { if (i>0 && name.startsWith("STM/") && items[i-1][1].startsWith("STM/")) names.push("/- -/"); names.push(name); });
                 const zs = nfmt(wl_z);
                 curves.push(`CUR WL${zs}; Z ${zs}\nXY * CBM ${names.join(' ')} CBM; OK`);
@@ -1184,7 +1183,7 @@
                 const zs = stem.filter(([x]) => Math.abs(x - cbm_first_x) < TOL).map(([,z]) => z);
                 if (zs.length) cbm_first_z_min = Math.min(...zs);
             }
-            const wl_list = cbm_max_z ? to_waterlines(stations, side, cbm_max_z, 1.0, cbm_first_x, cbm_first_z_min) : [];
+            const wl_list = cbm_max_z ? to_waterlines(stations, side, cbm_max_z, 1.0, cbm_first_z_min) : [];
             wl_list.forEach(wl => { out.push(wl); out.push(""); });
 
             const wl_zs = wl_list.map(wl => parseFloat(wl.split('\n')[0].split('; Z ').pop())).filter(z => !isNaN(z));
