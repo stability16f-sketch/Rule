@@ -441,8 +441,8 @@
             <!-- 탭 네비게이션 -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('rules')">🔍 규칙 검색</button>
-                <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
                 <button class="tab-btn" onclick="switchTab('hullform')">⚓ Hull Form PDF → TXT</button>
+                <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
             </div>
 
             <!-- 규칙 검색 탭 -->
@@ -657,7 +657,10 @@
                     <div id="hf-logBox" style="display:none; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:120px; overflow-y:auto; font-family:monospace; font-size:0.72rem; color:#64748b;"></div>
                 </div>
 
-                <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
+                    <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none; background:linear-gradient(135deg,#7c3aed,#4f46e5);">⚓ NAPA Modeling 다운로드</button>
+                </div>
             </div>
         </div>
     </div>
@@ -680,6 +683,7 @@
 
     let hfParsedData = null;
     let hfGeneratedTxt = '';
+    let hfGeneratedNapa = '';
 
     function hfHandleFile(file) {
         const isTxt = file.name.toLowerCase().endsWith('.txt');
@@ -751,10 +755,18 @@
 
         hfSetProgress(85, 'TXT 생성 중...');
         hfGeneratedTxt = hfBuildTXT(sections, file.name);
-        hfSetProgress(100, '완료!');
         hfLog('섹션 ' + sheetCount + '개 감지됨', 'ok');
         hfLog('총 좌표점 ' + totalPoints + '개 추출됨', 'ok');
         hfLog('TXT 파일 생성 완료', 'ok');
+        hfSetProgress(92, 'NAPA 파일 변환 중...');
+        try {
+            hfGeneratedNapa = hfConvertToNapa(hfGeneratedTxt);
+            hfLog('NAPA Modeling 파일 변환 완료', 'ok');
+        } catch(e) {
+            hfGeneratedNapa = '';
+            hfLog('NAPA 변환 오류: ' + e.message, 'err');
+        }
+        hfSetProgress(100, '완료!');
 
         document.getElementById('hf-statSections').textContent = sheetCount;
         document.getElementById('hf-statPoints').textContent = totalPoints;
@@ -776,6 +788,7 @@
         preview.textContent = hfGeneratedTxt.split('\n').slice(0, 40).join('\n') + '\n...(이하 생략)';
 
         document.getElementById('hf-downloadBtn').style.display = 'block';
+        if (hfGeneratedNapa) document.getElementById('hf-downloadNapaBtn').style.display = 'block';
         document.getElementById('hf-parseBtn').disabled = false;
     }
 
@@ -862,6 +875,270 @@
         URL.revokeObjectURL(url);
         hfLog('TXT 파일 다운로드 시작!', 'ok');
     }
+
+    function hfDownloadNAPA() {
+        if (!hfGeneratedNapa) { hfLog('NAPA 파일이 없습니다. 먼저 파싱하세요.', 'err'); return; }
+        const blob = new Blob([hfGeneratedNapa], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Hull_Form_NAPA.txt'; a.click();
+        URL.revokeObjectURL(url);
+        hfLog('NAPA Modeling 파일 다운로드 시작!', 'ok');
+    }
+
+    // ── OffsetToNapa JavaScript 포트 ──────────────────────────────────────────
+    (function() {
+        const TOL = 0.005;
+
+        function fix_z(z) { return (0.001 <= z && z <= 0.003) ? 0.0 : z; }
+
+        function nfmt(n) {
+            let s = n.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+            return s === '' || s === '-' ? '0' : s;
+        }
+
+        function dedup(points) {
+            const seen = new Set();
+            return points.filter(p => {
+                const key = p.map(v => Math.round(v * 1e6)).join(',');
+                if (seen.has(key)) return false;
+                seen.add(key); return true;
+            });
+        }
+
+        function collapse(points, ki) {
+            if (!points.length) return points;
+            const out = [];
+            let i = 0;
+            while (i < points.length) {
+                const ref = points[i][ki];
+                let end = points[i];
+                let j = i + 1;
+                while (j < points.length && Math.abs(points[j][ki] - ref) < TOL) { end = points[j]; j++; }
+                out.push(points[i]);
+                if (j - i > 1) out.push(end);
+                i = j;
+            }
+            return out;
+        }
+
+        function parse_all(txt) {
+            const COORD_RE       = /\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)/;
+            const X_HEADER_RE    = /\*?\s*X\s*=\s*(-?\d+\.?\d*)\s*m/i;
+            const PLAIN_COORD_RE = /^\s*(-?\d+\.?\d+)\s+(-?\d+\.?\d+)\s+(-?\d+\.?\d+)\s*$/;
+
+            const stations = {}, stern = [], stem = [], side = [], bottom = [];
+            let section = null, current_x = null;
+
+            for (const line of txt.split('\n')) {
+                const hasSect = (re) => re.test(line);
+                if      (/STATION PLAN/i.test(line))   { section = 'station'; }
+                else if (/STERN PROFILE/i.test(line))  { section = 'stern';  current_x = null; continue; }
+                else if (/STEM PROFILE/i.test(line))   { section = 'stem';   current_x = null; continue; }
+                else if (/SIDE TANGENT/i.test(line))   { section = 'side';   current_x = null; continue; }
+                else if (/BOTTOM TANGENT/i.test(line)) { section = 'bottom'; current_x = null; continue; }
+
+                if (section === null) continue;
+
+                if (section === 'station') {
+                    const xm = line.match(X_HEADER_RE);
+                    if (xm) { current_x = parseFloat(xm[1]); if (!(current_x in stations)) stations[current_x] = []; continue; }
+                    if (current_x === null) continue;
+                }
+
+                let coords = null;
+                let m = line.match(COORD_RE);
+                if (m) coords = [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])];
+                else { m = line.match(PLAIN_COORD_RE); if (m) coords = [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])]; }
+                if (!coords) continue;
+                const [cx, cy, cz] = coords;
+
+                if      (section === 'station') stations[current_x].push([cy, cz]);
+                else if (section === 'stern')   stern.push([cx, fix_z(cz)]);
+                else if (section === 'stem')    stem.push([cx, fix_z(cz)]);
+                else if (section === 'side')    side.push([cx, cy, fix_z(cz)]);
+                else if (section === 'bottom')  bottom.push([cx, cy, fix_z(cz)]);
+            }
+            return { stations, stern, stem, side, bottom };
+        }
+
+        function interp_stm_z(x_val, sp) {
+            if (!sp.length) return null;
+            const pts = [...sp].sort((a,b) => a[0]-b[0]);
+            const y_stm = pts[0][1];
+            if (x_val < pts[0][0] - TOL || x_val > pts[pts.length-1][0] + TOL) return null;
+            if (x_val <= pts[0][0]) return [y_stm, pts[0][2]];
+            if (x_val >= pts[pts.length-1][0]) return [y_stm, pts[pts.length-1][2]];
+            for (let i = 0; i < pts.length-1; i++) {
+                const [x0,,z0] = pts[i], [x1,,z1] = pts[i+1];
+                if (x0 <= x_val && x_val <= x1) {
+                    const t = Math.abs(x1-x0) > 1e-9 ? (x_val-x0)/(x1-x0) : 0;
+                    return [y_stm, z0 + t*(z1-z0)];
+                }
+            }
+            return null;
+        }
+
+        function to_station_curve(x_val, raw, cbm_max_z, sp) {
+            if (!raw.length) return "";
+            const stm_r = sp ? interp_stm_z(x_val, sp) : null;
+            const z_stm = stm_r ? stm_r[1] : null;
+
+            const zero_z  = raw.filter(([,z]) => Math.abs(z) < TOL);
+            let nonzero   = raw.filter(([,z]) => Math.abs(z) >= TOL);
+            const has_btm = zero_z.some(([y]) => Math.abs(y) >= TOL);
+            const has_cbm = zero_z.some(([y]) => Math.abs(y) <  TOL);
+
+            if (z_stm !== null) nonzero = nonzero.filter(([,z]) => z <= z_stm + TOL);
+            let pts = dedup(nonzero).sort((a,b) => (b[1]-a[1]) || (b[0]-a[0]));
+            pts = collapse(pts, 0);
+
+            const xs = nfmt(x_val);
+            const parts = [];
+            if (z_stm !== null) {
+                parts.push("STM");
+            } else if (cbm_max_z !== null && pts.length && pts[0][1] < cbm_max_z - TOL) {
+                parts.push(`(${nfmt(pts[0][0])},${nfmt(cbm_max_z)})`);
+                parts.push("/- -/");
+            }
+            for (let i = 0; i < pts.length; i++) {
+                const [y,z] = pts[i];
+                if (i > 0 && Math.abs(y - pts[i-1][0]) < TOL) parts.push("/- -/");
+                parts.push(`(${nfmt(y)},${nfmt(z)})`);
+            }
+            if (has_btm && has_cbm) { parts.push("BTM"); parts.push("/- -/"); parts.push("CBM"); }
+            else if (has_btm) parts.push("BTM");
+            else               parts.push("CBM");
+            return `CUR ST${xs}; X ${xs}\nYZ     * ${parts.join(' ')}; OK`;
+        }
+
+        function to_profile_curve(stern_pts, stem_pts, name) {
+            if (!stern_pts.length && !stem_pts.length) return "";
+            const s1 = collapse(dedup(stern_pts), 0);
+            const s2 = collapse(dedup(stem_pts),  0);
+            const parts = [];
+            s1.forEach(([x,z],i) => { if (i>0 && Math.abs(x-s1[i-1][0])<TOL) parts.push("/- -/"); parts.push(`(${nfmt(x)},${nfmt(z)})`); });
+            s2.forEach(([x,z],i) => { if (i===0 && s1.length) parts.push("/- -/"); else if (i>0 && Math.abs(x-s2[i-1][0])<TOL) parts.push("/- -/"); parts.push(`(${nfmt(x)},${nfmt(z)})`); });
+            return `CUR   ${name}; Y 0\nXZ     * ${parts.join(' ')}; OK`;
+        }
+
+        function to_side_curve(raw) {
+            if (!raw.length) return "";
+            const y_val = raw[0][1];
+            const pts = collapse(dedup(raw.map(([x,,z]) => [x,z])), 0);
+            const parts = [];
+            pts.forEach(([x,z],i) => { if (i>0 && Math.abs(x-pts[i-1][0])<TOL) parts.push("/- -/"); parts.push(`(${nfmt(x)},${nfmt(z)})`); });
+            return `CUR   STM; Y ${nfmt(y_val)}\nXZ     * ${parts.join(' ')}; OK`;
+        }
+
+        function to_bottom_curve(raw) {
+            if (!raw.length) return "";
+            const z_val = raw[0][2];
+            const pts = collapse(dedup(raw.map(([x,y]) => [x,y])), 0);
+            const parts = [];
+            let prev_x = null;
+            for (const [x,y] of pts) {
+                if (Math.abs(y) < TOL) {
+                    if (!parts.length || parts[parts.length-1] !== "CBM") parts.push("CBM");
+                } else {
+                    if (prev_x !== null && Math.abs(x-prev_x) < TOL) parts.push("/- -/");
+                    parts.push(`(${nfmt(x)},${nfmt(y)})`);
+                }
+                prev_x = x;
+            }
+            return `CUR   BTM; Z ${nfmt(z_val)}\nXY     * ${parts.join(' ')}; OK`;
+        }
+
+        function stm_xs_at_z(wl_z, sp) {
+            if (!sp.length) return [];
+            const pts = sp.map(([x,,z]) => [x,z]);
+            const xs = [];
+            for (let i = 0; i < pts.length-1; i++) {
+                const [x0,z0] = pts[i], [x1,z1] = pts[i+1];
+                if (Math.abs(z0-z1) < TOL) { if (Math.abs(z0-wl_z)<TOL) { xs.push(x0); xs.push(x1); } continue; }
+                const lo = Math.min(z0,z1), hi = Math.max(z0,z1);
+                if (lo-TOL <= wl_z && wl_z <= hi+TOL) xs.push(x0 + (wl_z-z0)/(z1-z0) * (x1-x0));
+            }
+            const seen = new Set();
+            return xs.filter(x => { const k = Math.round(x*1e4); if (seen.has(k)) return false; seen.add(k); return true; });
+        }
+
+        function to_waterlines(stations, sp, cbm_max_z, step) {
+            step = step || 1.0;
+            if (!cbm_max_z) return [];
+            const wl_zs = [];
+            for (let z = step; z < cbm_max_z - TOL; z += step) wl_zs.push(Math.round(z*1e6)/1e6);
+            wl_zs.push(cbm_max_z);
+
+            const st_info = {};
+            for (const [xk, pts] of Object.entries(stations)) {
+                const x_val = parseFloat(xk);
+                const nonzero = pts.filter(([,z]) => Math.abs(z)>=TOL).map(([,z])=>z);
+                if (!nonzero.length) continue;
+                const has_btm = pts.some(([y,z]) => Math.abs(z)<TOL && Math.abs(y)>=TOL);
+                const z_min = has_btm ? 0.0 : Math.min(...nonzero);
+                const raw_max = Math.max(...nonzero);
+                const z_max = raw_max < cbm_max_z - TOL ? cbm_max_z : raw_max;
+                const sr = sp.length ? interp_stm_z(x_val, sp) : null;
+                st_info[x_val] = [z_min, z_max, sr ? sr[1] : null];
+            }
+            const sorted_xs = Object.keys(st_info).map(Number).sort((a,b)=>a-b);
+
+            return wl_zs.reduce((curves, wl_z) => {
+                const items = [];
+                for (const xv of sorted_xs) {
+                    const [zn, zx, zs] = st_info[xv];
+                    if (wl_z < zn-TOL || wl_z > zx+TOL) continue;
+                    if (zs !== null && wl_z > zs+TOL) continue;
+                    items.push([xv, `ST${nfmt(xv)}`]);
+                }
+                for (const xs of stm_xs_at_z(wl_z, sp)) items.push([xs, `STM/X=#${nfmt(xs)}`]);
+                if (!items.length) return curves;
+                items.sort((a,b) => a[0]-b[0]);
+                const names = [];
+                items.forEach(([,name],i) => { if (i>0 && name.startsWith("STM/") && items[i-1][1].startsWith("STM/")) names.push("/- -/"); names.push(name); });
+                const zs = nfmt(wl_z);
+                curves.push(`CUR WL${zs}; Z ${zs}\nXY * CBM ${names.join(' ')} CBM; OK`);
+                return curves;
+            }, []);
+        }
+
+        function to_hull(has_cbm, has_stm, has_btm, st_xs, wl_zs) {
+            const names = [];
+            if (has_cbm) names.push("CBM");
+            if (has_stm) names.push("STM");
+            if (has_btm) names.push("BTM");
+            st_xs.forEach(x => names.push(`ST${nfmt(x)}`));
+            wl_zs.forEach(z => names.push(`WL${nfmt(z)}`));
+            return `@@ TRANSOME의 경우 직접 모델링 후 WL에 추가하시오\n@@ HULL_P 정의에 TRANSOME 을 추가하시오\n\n@@SUR HULL_P\n@@THR ${names.join(' ')}; OK`;
+        }
+
+        window.hfConvertToNapa = function(txt) {
+            const { stations, stern, stem, side, bottom } = parse_all(txt);
+            const out = [];
+
+            if (stern.length || stem.length) { out.push(to_profile_curve(stern, stem, "CBM")); out.push(""); }
+            if (side.length)   { out.push(to_side_curve(side));   out.push(""); }
+            if (bottom.length) { out.push(to_bottom_curve(bottom)); out.push(""); }
+
+            const all_prof = [...stern, ...stem];
+            const cbm_max_z = all_prof.length ? Math.max(...all_prof.map(([,z])=>z)) : null;
+
+            Object.keys(stations).map(Number).sort((a,b)=>a-b).forEach(xv => {
+                const c = to_station_curve(xv, stations[xv], cbm_max_z, side);
+                if (c) { out.push(c); out.push(""); }
+            });
+
+            const wl_list = cbm_max_z ? to_waterlines(stations, side, cbm_max_z) : [];
+            wl_list.forEach(wl => { out.push(wl); out.push(""); });
+
+            const wl_zs = wl_list.map(wl => parseFloat(wl.split('\n')[0].split('; Z ').pop())).filter(z => !isNaN(z));
+            out.push(to_hull(!!(stern.length||stem.length), !!side.length, !!bottom.length,
+                Object.keys(stations).map(Number).sort((a,b)=>a-b), wl_zs));
+            out.push("");
+            return out.join('\n');
+        };
+    })();
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -882,12 +1159,12 @@
             if (tabName === 'rules') {
                 document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('rulesTab').classList.add('active');
-            } else if (tabName === 'interpolation') {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('interpolationTab').classList.add('active');
             } else if (tabName === 'hullform') {
-                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('hullformTab').classList.add('active');
+            } else if (tabName === 'interpolation') {
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('interpolationTab').classList.add('active');
             }
         }
 
