@@ -379,7 +379,7 @@ def to_waterlines(stations: dict, side_points, cbm_max_z: float,
     STM 범위 내 Station은 STM Z_stm 이하일 때만 포함.
     WL_Z에서 STM 교차점이 있으면 STM/X=# 으로 삽입.
     인접한 두 STM 참조 사이에는 /- -/ 삽입.
-    CBM이 정의된 경우 항상 CBM /- -/ 첫ST... 로 연결 (ST-5가 없는 WL에서도 CBM을 따라 이동).
+    첫 Station의 X가 cbm_first_x와 같으면 CBM /- -/ ST... 로 연결.
     형식: CUR WL{Z}; Z {Z}
           XY * CBM ... STM/X=# ... CBM; OK
     """
@@ -434,9 +434,8 @@ def to_waterlines(stations: dict, side_points, cbm_max_z: float,
 
         # 이름 목록 조합 (인접 STM 사이에 /- -/ 삽입)
         names = []
-        # CBM이 정의되어 있으면 항상 CBM /- -/ ST... 로 연결
-        # (첫 Station이 cbm_first_x와 일치하지 않더라도 CBM을 따라 이동)
-        if cbm_first_x is not None:
+        # 첫 Station X == CBM 시작 X 이면 CBM과 /- -/ 연결
+        if cbm_first_x is not None and abs(items[0][0] - cbm_first_x) < TOL:
             names.append("/- -/")
         for i, (_, name) in enumerate(items):
             if i > 0 and name.startswith("STM/") and items[i-1][1].startswith("STM/"):

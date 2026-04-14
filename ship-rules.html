@@ -1119,7 +1119,7 @@
                 if (!items.length) return curves;
                 items.sort((a,b) => a[0]-b[0]);
                 const names = [];
-                if (cbm_first_x != null) names.push("/- -/");
+                if (cbm_first_x != null && Math.abs(items[0][0] - cbm_first_x) < TOL) names.push("/- -/");
                 items.forEach(([,name],i) => { if (i>0 && name.startsWith("STM/") && items[i-1][1].startsWith("STM/")) names.push("/- -/"); names.push(name); });
                 const zs = nfmt(wl_z);
                 curves.push(`CUR WL${zs}; Z ${zs}\nXY * CBM ${names.join(' ')} CBM; OK`);
