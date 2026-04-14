@@ -798,6 +798,9 @@
 
     function hfParseHullFormText(text) {
         const sections = {};
+        // 공백 구분 좌표 (hfBuildTXT 출력 형식)를 (x,y,z) 형식으로 변환
+        text = text.replace(/^[ \t]*(-?\d+(?:\.\d*)?)\s+(-?\d+(?:\.\d*)?)\s+(-?\d+(?:\.\d*)?)\s*$/gm,
+                            '($1,$2,$3)');
         text = text.replace(/\s+/g, ' ');
         const coordRe = /\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)/g;
         const sectionRe = /(\d+)\.\s+(STERN PROFILE|STEM PROFILE|SIDE TANGENT LINE|BOTTOM TANGENT LINE|STATION PLAN)/gi;
@@ -828,8 +831,13 @@
                     const coords = [...chunk.slice(sStart, sEnd).matchAll(coordRe)].map(m => [+m[1], +m[2], +m[3]]);
                     if (coords.length > 0) stationData['X=' + sm[1] + 'm'] = coords;
                 }
-                sections[name] = stationData;
-                hfLog('"' + name + '": 스테이션 ' + Object.keys(stationData).length + '개 파싱', 'ok');
+                // 같은 이름의 STATION PLAN이 반복될 경우(hfBuildTXT 출력 형식) 병합
+                if (sections[name] && !Array.isArray(sections[name])) {
+                    Object.assign(sections[name], stationData);
+                } else {
+                    sections[name] = stationData;
+                }
+                hfLog('"' + name + '": 스테이션 누적 ' + Object.keys(sections[name]).length + '개', 'ok');
             } else {
                 const coords = [...chunk.matchAll(coordRe)].map(m => [+m[1], +m[2], +m[3]]);
                 sections[name] = coords;
