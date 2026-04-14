@@ -661,6 +661,15 @@
                     <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
                     <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none; background:linear-gradient(135deg,#7c3aed,#4f46e5);">⚓ NAPA Modeling 다운로드</button>
                 </div>
+                <div id="hf-partBtnsWrap" style="display:none; margin-top:10px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px;">
+                    <div style="font-size:0.72rem; color:#0369a1; font-weight:600; margin-bottom:8px;">개별 NAPA 커브 다운로드</div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="pdf-btn" id="hf-dlCbmBtn" onclick="hfDownloadPart('cbm')" style="display:none; padding:5px 14px; font-size:0.78rem; background:linear-gradient(135deg,#0891b2,#0369a1);">📐 CBM</button>
+                        <button class="pdf-btn" id="hf-dlStmBtn" onclick="hfDownloadPart('stm')" style="display:none; padding:5px 14px; font-size:0.78rem; background:linear-gradient(135deg,#0891b2,#0369a1);">📐 STM</button>
+                        <button class="pdf-btn" id="hf-dlBtmBtn" onclick="hfDownloadPart('btm')" style="display:none; padding:5px 14px; font-size:0.78rem; background:linear-gradient(135deg,#0891b2,#0369a1);">📐 BTM</button>
+                        <button class="pdf-btn" id="hf-dlStBtn"  onclick="hfDownloadPart('station')" style="display:none; padding:5px 14px; font-size:0.78rem; background:linear-gradient(135deg,#0891b2,#0369a1);">📐 STATION</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -684,6 +693,7 @@
     let hfParsedData = null;
     let hfGeneratedTxt = '';
     let hfGeneratedNapa = '';
+    let hfPartCurves = {};
 
     function hfHandleFile(file) {
         const isTxt = file.name.toLowerCase().endsWith('.txt');
@@ -789,6 +799,18 @@
 
         document.getElementById('hf-downloadBtn').style.display = 'block';
         if (hfGeneratedNapa) document.getElementById('hf-downloadNapaBtn').style.display = 'block';
+
+        // 개별 NAPA 커브 버튼
+        try {
+            hfPartCurves = hfGetPartCurves(hfGeneratedTxt);
+            const wrap = document.getElementById('hf-partBtnsWrap');
+            wrap.style.display = 'block';
+            if (hfPartCurves.cbm)     document.getElementById('hf-dlCbmBtn').style.display = '';
+            if (hfPartCurves.stm)     document.getElementById('hf-dlStmBtn').style.display = '';
+            if (hfPartCurves.btm)     document.getElementById('hf-dlBtmBtn').style.display = '';
+            if (hfPartCurves.station) document.getElementById('hf-dlStBtn').style.display  = '';
+        } catch(e) { hfLog('개별 커브 생성 오류: ' + e.message, 'err'); }
+
         document.getElementById('hf-parseBtn').disabled = false;
     }
 
@@ -884,6 +906,18 @@
         a.href = url; a.download = 'Hull_Form_NAPA.txt'; a.click();
         URL.revokeObjectURL(url);
         hfLog('NAPA Modeling 파일 다운로드 시작!', 'ok');
+    }
+
+    function hfDownloadPart(type) {
+        const content = hfPartCurves[type];
+        if (!content) { hfLog(type.toUpperCase() + ' 커브가 없습니다.', 'err'); return; }
+        const label = { cbm: 'CBM', stm: 'STM', btm: 'BTM', station: 'STATION' }[type] || type.toUpperCase();
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'NAPA_' + label + '.txt'; a.click();
+        URL.revokeObjectURL(url);
+        hfLog('NAPA_' + label + '.txt 다운로드!', 'ok');
     }
 
     // ── OffsetToNapa JavaScript 포트 ──────────────────────────────────────────
@@ -1113,6 +1147,25 @@
             wl_zs.forEach(z => names.push(`WL${nfmt(z)}`));
             return `@@ TRANSOME의 경우 직접 모델링 후 WL에 추가하시오\n@@ HULL_P 정의에 TRANSOME 을 추가하시오\n\n@@SUR HULL_P\n@@THR ${names.join(' ')}; OK`;
         }
+
+        window.hfGetPartCurves = function(txt) {
+            const { stations, stern, stem, side, bottom } = parse_all(txt);
+
+            const cbm = (stern.length || stem.length) ? to_profile_curve(stern, stem, "CBM") : null;
+            const stm = side.length   ? to_side_curve(side)    : null;
+            const btm = bottom.length ? to_bottom_curve(bottom) : null;
+
+            const all_prof = [...stern, ...stem];
+            const cbm_max_z = all_prof.length ? Math.max(...all_prof.map(([,z]) => z)) : null;
+            const st_lines = [];
+            Object.keys(stations).map(Number).sort((a, b) => a - b).forEach(xv => {
+                const c = to_station_curve(xv, stations[xv], cbm_max_z, side);
+                if (c) { st_lines.push(c); st_lines.push(""); }
+            });
+            const station = st_lines.length ? st_lines.join('\n') : null;
+
+            return { cbm, stm, btm, station };
+        };
 
         window.hfConvertToNapa = function(txt) {
             const { stations, stern, stem, side, bottom } = parse_all(txt);
