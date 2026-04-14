@@ -659,7 +659,39 @@
 
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
-                    <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none; background:linear-gradient(135deg,#7c3aed,#4f46e5);">⚓ NAPA Modeling 다운로드</button>
+                    <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none; background:linear-gradient(135deg,#475569,#334155);">⚙ 전체 NAPA 모델링 다운로드</button>
+                </div>
+
+                <!-- NAPA Profile Curves 편집기 -->
+                <div id="hf-profileSection" style="display:none; margin-top:28px; border-top:2px solid #e5e7eb; padding-top:20px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                        <h3 style="color:#1e3a8a; font-size:0.95rem; font-weight:700; margin:0;">⚓ NAPA Profile Curves 편집</h3>
+                        <span style="font-size:0.75rem; color:#64748b;">각 커브를 확인·수정 후 개별 다운로드하세요</span>
+                    </div>
+
+                    <div id="hf-cbmGroup" style="display:none; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                            <label style="font-weight:600; font-size:0.82rem; color:#334155; margin-bottom:0;">📐 CBM <span style="font-weight:400; color:#64748b; font-size:0.75rem;">Stern + Stem Profile</span></label>
+                            <button class="pdf-btn" onclick="hfDownloadCurve('cbm')" style="padding:4px 14px; font-size:0.75rem; margin:0;">📥 CBM</button>
+                        </div>
+                        <textarea id="hf-cbmTxt" spellcheck="false" style="width:100%; box-sizing:border-box; height:90px; font-family:monospace; font-size:0.72rem; line-height:1.5; border:1px solid #cbd5e1; border-radius:6px; padding:8px; resize:vertical; background:#f8fafc; color:#1e293b;"></textarea>
+                    </div>
+
+                    <div id="hf-stmGroup" style="display:none; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                            <label style="font-weight:600; font-size:0.82rem; color:#334155; margin-bottom:0;">📐 STM <span style="font-weight:400; color:#64748b; font-size:0.75rem;">Side Tangent Line</span></label>
+                            <button class="pdf-btn" onclick="hfDownloadCurve('stm')" style="padding:4px 14px; font-size:0.75rem; margin:0;">📥 STM</button>
+                        </div>
+                        <textarea id="hf-stmTxt" spellcheck="false" style="width:100%; box-sizing:border-box; height:70px; font-family:monospace; font-size:0.72rem; line-height:1.5; border:1px solid #cbd5e1; border-radius:6px; padding:8px; resize:vertical; background:#f8fafc; color:#1e293b;"></textarea>
+                    </div>
+
+                    <div id="hf-btmGroup" style="display:none; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                            <label style="font-weight:600; font-size:0.82rem; color:#334155; margin-bottom:0;">📐 BTM <span style="font-weight:400; color:#64748b; font-size:0.75rem;">Bottom Tangent Line</span></label>
+                            <button class="pdf-btn" onclick="hfDownloadCurve('btm')" style="padding:4px 14px; font-size:0.75rem; margin:0;">📥 BTM</button>
+                        </div>
+                        <textarea id="hf-btmTxt" spellcheck="false" style="width:100%; box-sizing:border-box; height:70px; font-family:monospace; font-size:0.72rem; line-height:1.5; border:1px solid #cbd5e1; border-radius:6px; padding:8px; resize:vertical; background:#f8fafc; color:#1e293b;"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -758,13 +790,26 @@
         hfLog('섹션 ' + sheetCount + '개 감지됨', 'ok');
         hfLog('총 좌표점 ' + totalPoints + '개 추출됨', 'ok');
         hfLog('TXT 파일 생성 완료', 'ok');
-        hfSetProgress(92, 'NAPA 파일 변환 중...');
+
+        // ── Profile Curves (CBM / STM / BTM) 편집기 채우기
+        hfSetProgress(90, 'Profile Curves 생성 중...');
+        try {
+            const prof = hfGetProfileCurves(hfGeneratedTxt);
+            document.getElementById('hf-profileSection').style.display = 'block';
+            if (prof.cbm) { document.getElementById('hf-cbmGroup').style.display='block'; document.getElementById('hf-cbmTxt').value=prof.cbm; hfLog('CBM 생성 완료', 'ok'); }
+            if (prof.stm) { document.getElementById('hf-stmGroup').style.display='block'; document.getElementById('hf-stmTxt').value=prof.stm; hfLog('STM 생성 완료', 'ok'); }
+            if (prof.btm) { document.getElementById('hf-btmGroup').style.display='block'; document.getElementById('hf-btmTxt').value=prof.btm; hfLog('BTM 생성 완료', 'ok'); }
+            if (!prof.cbm && !prof.stm && !prof.btm) hfLog('Profile 데이터 없음 (CBM/STM/BTM)', 'err');
+        } catch(e) { hfLog('Profile 생성 오류: ' + e.message, 'err'); }
+
+        // ── 전체 NAPA 모델링 생성
+        hfSetProgress(95, '전체 NAPA 모델링 생성 중...');
         try {
             hfGeneratedNapa = hfConvertToNapa(hfGeneratedTxt);
-            hfLog('NAPA Modeling 파일 변환 완료', 'ok');
+            hfLog('전체 NAPA 모델링 생성 완료', 'ok');
         } catch(e) {
             hfGeneratedNapa = '';
-            hfLog('NAPA 변환 오류: ' + e.message, 'err');
+            hfLog('NAPA 전체 변환 오류: ' + e.message, 'err');
         }
         hfSetProgress(100, '완료!');
 
@@ -881,9 +926,20 @@
         const blob = new Blob([hfGeneratedNapa], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'Hull_Form_NAPA.txt'; a.click();
+        a.href = url; a.download = 'Hull_Form_NAPA_Full.txt'; a.click();
         URL.revokeObjectURL(url);
-        hfLog('NAPA Modeling 파일 다운로드 시작!', 'ok');
+        hfLog('전체 NAPA 모델링 다운로드 시작!', 'ok');
+    }
+
+    function hfDownloadCurve(type) {
+        const el = document.getElementById('hf-' + type + 'Txt');
+        if (!el || !el.value.trim()) { hfLog(type.toUpperCase() + ' 커브가 없습니다.', 'err'); return; }
+        const blob = new Blob([el.value], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Hull_Form_' + type.toUpperCase() + '.txt'; a.click();
+        URL.revokeObjectURL(url);
+        hfLog(type.toUpperCase() + ' 다운로드 시작!', 'ok');
     }
 
     // ── OffsetToNapa JavaScript 포트 ──────────────────────────────────────────
@@ -1063,7 +1119,7 @@
             return xs.filter(x => { const k = Math.round(x*1e4); if (seen.has(k)) return false; seen.add(k); return true; });
         }
 
-        function to_waterlines(stations, sp, cbm_max_z, step) {
+        function to_waterlines(stations, sp, cbm_max_z, step, cbm_first_x) {
             step = step || 1.0;
             if (!cbm_max_z) return [];
             const wl_zs = [];
@@ -1096,6 +1152,8 @@
                 if (!items.length) return curves;
                 items.sort((a,b) => a[0]-b[0]);
                 const names = [];
+                // 첫 Station X == CBM 시작 X 이면 CBM /- -/ ST... 로 연결
+                if (cbm_first_x != null && Math.abs(items[0][0] - cbm_first_x) < TOL) names.push("/- -/");
                 items.forEach(([,name],i) => { if (i>0 && name.startsWith("STM/") && items[i-1][1].startsWith("STM/")) names.push("/- -/"); names.push(name); });
                 const zs = nfmt(wl_z);
                 curves.push(`CUR WL${zs}; Z ${zs}\nXY * CBM ${names.join(' ')} CBM; OK`);
@@ -1113,6 +1171,15 @@
             return `@@ TRANSOME의 경우 직접 모델링 후 WL에 추가하시오\n@@ HULL_P 정의에 TRANSOME 을 추가하시오\n\n@@SUR HULL_P\n@@THR ${names.join(' ')}; OK`;
         }
 
+        window.hfGetProfileCurves = function(txt) {
+            const { stern, stem, side, bottom } = parse_all(txt);
+            return {
+                cbm: (stern.length || stem.length) ? to_profile_curve(stern, stem, "CBM") : null,
+                stm: side.length   ? to_side_curve(side)    : null,
+                btm: bottom.length ? to_bottom_curve(bottom) : null,
+            };
+        };
+
         window.hfConvertToNapa = function(txt) {
             const { stations, stern, stem, side, bottom } = parse_all(txt);
             const out = [];
@@ -1124,12 +1191,19 @@
             const all_prof = [...stern, ...stem];
             const cbm_max_z = all_prof.length ? Math.max(...all_prof.map(([,z])=>z)) : null;
 
+            // CBM 시작 X 계산 (stern 첫 점, 없으면 stem 첫 점)
+            let cbm_first_x = null;
+            const stern_c = collapse(dedup(stern), 0);
+            const stem_c  = collapse(dedup(stem),  0);
+            if (stern_c.length)      cbm_first_x = stern_c[0][0];
+            else if (stem_c.length)  cbm_first_x = stem_c[0][0];
+
             Object.keys(stations).map(Number).sort((a,b)=>a-b).forEach(xv => {
                 const c = to_station_curve(xv, stations[xv], cbm_max_z, side);
                 if (c) { out.push(c); out.push(""); }
             });
 
-            const wl_list = cbm_max_z ? to_waterlines(stations, side, cbm_max_z) : [];
+            const wl_list = cbm_max_z ? to_waterlines(stations, side, cbm_max_z, 1.0, cbm_first_x) : [];
             wl_list.forEach(wl => { out.push(wl); out.push(""); });
 
             const wl_zs = wl_list.map(wl => parseFloat(wl.split('\n')[0].split('; Z ').pop())).filter(z => !isNaN(z));
