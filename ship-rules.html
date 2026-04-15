@@ -1267,7 +1267,11 @@
 
             const xs = nfmt(x_val);
             const parts = [];
-            if (z_stm !== null) {
+            const isDN = customName && customName.toUpperCase().includes('DN');
+            if (isDN) {
+                // DN 스테이션: 상단이 중심선(CBM)에서 시작
+                parts.push("CBM");
+            } else if (z_stm !== null) {
                 parts.push("STM");
             } else if (cbm_max_z !== null && pts.length && pts[0][1] < cbm_max_z - TOL) {
                 parts.push(`(${nfmt(pts[0][0])},${nfmt(cbm_max_z)})`);
