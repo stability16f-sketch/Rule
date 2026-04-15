@@ -1256,7 +1256,10 @@
             const zero_z  = raw.filter(([,z]) => Math.abs(z) < TOL);
             let nonzero   = raw.filter(([,z]) => Math.abs(z) >= TOL);
             const has_btm = zero_z.some(([y]) => Math.abs(y) >= TOL);
-            const has_cbm = zero_z.some(([y]) => Math.abs(y) <  TOL);
+            // Y=0 점은 모두 CBM(중심선) — z=0인 경우뿐 아니라 z≠0이어도 포함
+            const has_cbm = raw.some(([y]) => Math.abs(y) < TOL);
+            // Y=0인 점은 좌표로 출력하지 않고 CBM 키워드로 대체
+            nonzero = nonzero.filter(([y]) => Math.abs(y) >= TOL);
 
             if (z_stm !== null) nonzero = nonzero.filter(([,z]) => z <= z_stm + TOL);
             let pts = dedup(nonzero).sort((a,b) => (b[1]-a[1]) || (b[0]-a[0]));
