@@ -442,6 +442,7 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('rules')">🔍 규칙 검색</button>
                 <button class="tab-btn" onclick="switchTab('hullform')">⚓ Hull Form PDF → TXT</button>
+                <button class="tab-btn" onclick="switchTab('opening')">📄 Opening → NAPA</button>
                 <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
             </div>
 
@@ -730,6 +731,211 @@
                     <div id="hf-regenPreview" style="display:none; margin-top:12px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:150px; overflow-y:auto; font-family:monospace; font-size:0.7rem; color:#334155; white-space:pre;"></div>
                 </div>
             </div>
+
+            <!-- Opening → NAPA 탭 -->
+            <div id="openingTab" class="tab-content">
+                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📄 Opening Data PDF → NAPA</h2>
+                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">Opening Data 형식의 PDF를 업로드하면 개구부 정보를 표 및 CSV로 추출합니다</p>
+
+                <!-- Upload -->
+                <div class="form-group">
+                    <label>📂 PDF 파일 업로드</label>
+                    <div id="op-dropzone" style="border:2px dashed #e5e7eb; border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#f8fafc;">
+                        <input type="file" id="op-fileInput" accept=".pdf" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
+                        <div style="font-size:2rem; margin-bottom:10px;">⬆️</div>
+                        <div style="font-size:0.9rem; color:#64748b;">PDF 파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
+                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:6px;">Opening Data 형식의 PDF만 지원됩니다</div>
+                        <div id="op-fileName" style="margin-top:10px; font-family:monospace; font-size:0.78rem; color:#10b981; display:none;"></div>
+                    </div>
+                </div>
+
+                <div id="op-errorMsg" style="display:none; color:#a32d2d; font-size:13px; margin-bottom:14px; padding:10px 14px; background:#fcebeb; border-radius:8px; border:1px solid #f09595;"></div>
+
+                <div id="op-resultSection" style="display:none;">
+                    <!-- Stats -->
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                            <div id="op-totalCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">전체 개구부</div>
+                        </div>
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                            <div id="op-apCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">Air Pipe (AP)</div>
+                        </div>
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
+                            <div id="op-otherCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">VT / HT / DR</div>
+                        </div>
+                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; text-align:center;">
+                            <div id="op-unpCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#dc2626;">0</div>
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">UNPROTECTED</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;">
+                        <button class="pdf-btn" id="op-downloadBtn" style="display:inline-block; width:auto; margin-top:0; padding:10px 22px; font-size:0.9rem;">📥 CSV 다운로드</button>
+                        <button class="pdf-btn" id="op-resetBtn" style="display:inline-block; width:auto; margin-top:0; padding:10px 22px; font-size:0.9rem; background:linear-gradient(135deg,#64748b,#475569);">🔄 다시 업로드</button>
+                        <span id="op-statusMsg" style="font-size:13px; color:#64748b; margin-left:auto;"></span>
+                    </div>
+
+                    <div style="overflow:auto; border:1px solid #e8e8e6; border-radius:10px; background:#fff; max-height:480px;">
+                        <table id="op-table" style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead><tr id="op-thead"></tr></thead>
+                            <tbody id="op-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                #op-table th{background:#f5f5f4;padding:9px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e8e8e6;white-space:nowrap;position:sticky;top:0;z-index:1;color:#1c1c1a;}
+                #op-table td{padding:7px 12px;border-bottom:1px solid #f0f0ee;white-space:nowrap;color:#1c1c1a;}
+                #op-table tr:last-child td{border-bottom:none;}
+                #op-table tr:hover td{background:#fafaf9;}
+                #op-table .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;}
+                #op-table .badge-w{background:#E1F5EE;color:#0F6E56;}
+                #op-table .badge-u{background:#FAECE7;color:#993C1D;}
+                #op-table .tag-id{font-family:monospace;font-size:11px;background:#f0f0ee;padding:2px 6px;border-radius:4px;color:#1c1c1a;}
+            </style>
+
+            <script>
+            // Opening Data Parser 전용 스크립트
+            (function() {
+                const headers = ["ID","DES","WT","OTYPE","GEOMOBJ","FR","DX","REFX","REFY","REFZ","CONN","STAGE"];
+                let parsedRows = [];
+
+                const dropZone = document.getElementById('op-dropzone');
+                const fileInput = document.getElementById('op-fileInput');
+                const resultSection = document.getElementById('op-resultSection');
+                const errorMsg = document.getElementById('op-errorMsg');
+                const fileNameEl = document.getElementById('op-fileName');
+
+                dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor='#3b82f6'; dropZone.style.background='rgba(59,130,246,0.05)'; });
+                dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor='#e5e7eb'; dropZone.style.background='#f8fafc'; });
+                dropZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropZone.style.borderColor='#e5e7eb';
+                    dropZone.style.background='#f8fafc';
+                    const f = e.dataTransfer.files[0];
+                    if (f) handleFile(f);
+                });
+                fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+                document.getElementById('op-resetBtn').addEventListener('click', () => {
+                    resultSection.style.display = 'none';
+                    dropZone.style.display = '';
+                    errorMsg.style.display = 'none';
+                    fileNameEl.style.display = 'none';
+                    fileInput.value = '';
+                    parsedRows = [];
+                });
+                document.getElementById('op-downloadBtn').addEventListener('click', downloadCSV);
+
+                async function handleFile(file) {
+                    if (!file || file.type !== 'application/pdf') { showError('PDF 파일만 업로드 가능합니다.'); return; }
+                    showError('');
+                    fileNameEl.textContent = '📎 ' + file.name;
+                    fileNameEl.style.display = 'block';
+                    document.getElementById('op-statusMsg').textContent = '파싱 중...';
+                    try {
+                        const ab = await file.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const tc = await page.getTextContent();
+                            fullText += tc.items.map(it => it.str).join(' ') + '\n';
+                        }
+                        parsedRows = parseOpeningData(fullText);
+                        if (parsedRows.length === 0) {
+                            showError('Opening Data를 찾을 수 없습니다. 올바른 형식의 PDF인지 확인해 주세요.');
+                            document.getElementById('op-statusMsg').textContent = '';
+                            return;
+                        }
+                        renderResults();
+                    } catch (e) {
+                        showError('PDF 읽기 오류: ' + e.message);
+                        document.getElementById('op-statusMsg').textContent = '';
+                    }
+                }
+
+                function parseOpeningData(text) {
+                    const rows = [];
+                    const opeReg = /OPEN?,?\s+([\w.\-]+),?\s+'([^']+)'[\s\S]*?TYP,?\s+(WEATHERTIGHT|UNPROTECTED)\s+POS,?\s+\(#(-?\d+)([+-][\d.]+),\s*(-?[\d.]+),\s*([\d.]+)\)[\s\S]*?CON,?\s+([\w.\-]+),\s*SEA/g;
+                    let m;
+                    while ((m = opeReg.exec(text)) !== null) {
+                        const id = m[1], des = m[2], wt = m[3];
+                        const fr = parseInt(m[4]), dx = parseFloat(m[5]);
+                        const refy = parseFloat(m[6]), refz = parseFloat(m[7]);
+                        const conn = m[8] + ', SEA';
+                        rows.push([id, des, wt, '', '', fr, dx, '', refy, refz, conn, '']);
+                    }
+                    return rows;
+                }
+
+                function renderResults() {
+                    const ap = parsedRows.filter(r => r[0].startsWith('AP')).length;
+                    const unp = parsedRows.filter(r => r[2] === 'UNPROTECTED').length;
+                    document.getElementById('op-totalCount').textContent = parsedRows.length;
+                    document.getElementById('op-apCount').textContent = ap;
+                    document.getElementById('op-otherCount').textContent = parsedRows.length - ap;
+                    document.getElementById('op-unpCount').textContent = unp;
+                    document.getElementById('op-statusMsg').textContent = parsedRows.length + '개 항목 파싱 완료';
+
+                    const thead = document.getElementById('op-thead');
+                    thead.innerHTML = '';
+                    headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; thead.appendChild(th); });
+
+                    const tbody = document.getElementById('op-tbody');
+                    tbody.innerHTML = '';
+                    parsedRows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        row.forEach((val, i) => {
+                            const td = document.createElement('td');
+                            if (i === 0) {
+                                const span = document.createElement('span');
+                                span.className = 'tag-id';
+                                span.textContent = val;
+                                td.appendChild(span);
+                            } else if (i === 2) {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge ' + (val === 'WEATHERTIGHT' ? 'badge-w' : 'badge-u');
+                                badge.textContent = val;
+                                td.appendChild(badge);
+                            } else {
+                                td.textContent = val;
+                            }
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+
+                    dropZone.style.display = 'none';
+                    resultSection.style.display = 'block';
+                }
+
+                function downloadCSV() {
+                    const lines = [headers.join(',')];
+                    parsedRows.forEach(row => {
+                        const escaped = row.map(v => {
+                            const s = String(v);
+                            return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+                        });
+                        lines.push(escaped.join(','));
+                    });
+                    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });  // BOM for Excel UTF-8
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'Opening_Data.csv';
+                    a.click();
+                }
+
+                function showError(msg) {
+                    if (msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
+                    else { errorMsg.style.display = 'none'; }
+                }
+            })();
+            </script>
         </div>
     </div>
 
@@ -1554,8 +1760,11 @@
             } else if (tabName === 'hullform') {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('hullformTab').classList.add('active');
-            } else if (tabName === 'interpolation') {
+            } else if (tabName === 'opening') {
                 document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('openingTab').classList.add('active');
+            } else if (tabName === 'interpolation') {
+                document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
                 document.getElementById('interpolationTab').classList.add('active');
             }
         }
