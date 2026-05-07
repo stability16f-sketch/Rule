@@ -1,0 +1,25 @@
+# Sensitive / secret files
+API KEY.txt
+*.key
+*.pem
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Local data / scratch
+Offset.txt
+Offset_napa.txt
+data/
+웹 주소.txt
+Opening_Data_Parser.html
+lotto.html
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
