@@ -871,17 +871,43 @@
                     const rows = [];
                     // pdf.js can split a minus sign into its own token (e.g. "- 23" instead of "-23"),
                     // so allow optional whitespace after every sign and strip it before parsing.
-                    const opeReg = /OPEN?,?\s+([\w.\-]+),?\s+'([^']+)'[\s\S]*?TYP,?\s+(WEATHERTIGHT|UNPROTECTED)\s+POS,?\s+\(\s*#\s*(-?\s*\d+)\s*([+-]\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*\)[\s\S]*?CON,?\s+([\w.\-][\w.\-\s]*?),\s*SEA/g;
                     const stripWS = s => s.replace(/\s+/g, '');
+
+                    // Split into one block per opening (OPEN ... up to the next OPEN line or EOF).
+                    // POS / TYP / CON are matched independently inside each block so their order
+                    // can differ between formats:
+                    //   PDF: OPEN -> TYP -> POS -> CON       TXT: OPEN -> POS -> TYP -> CON
+                    const blockReg = /OPEN?,?\s+([\w.\-]+),?\s+'([^']+)'([\s\S]*?)(?=OPEN?,?\s+[\w.\-]+,?\s+'|$)/g;
                     let m;
-                    while ((m = opeReg.exec(text)) !== null) {
-                        const id = m[1], des = m[2], wt = m[3];
-                        const fr = parseInt(stripWS(m[4]));
-                        const dx = parseFloat(stripWS(m[5]));
-                        const refy = parseFloat(stripWS(m[6]));
-                        const refz = parseFloat(stripWS(m[7]));
-                        const conn = m[8] + ', SEA';
-                        rows.push([id, des, wt, '', '', fr, dx, '', refy, refz, conn, '']);
+                    while ((m = blockReg.exec(text)) !== null) {
+                        const id = m[1], des = m[2], body = m[3];
+
+                        const typM = body.match(/TYP,?\s+(WEATHERTIGHT|UNPROTECTED)/);
+                        const wt = typM ? typM[1] : '';
+
+                        // POS supports two coordinate formats:
+                        //   frame-based:  (#FR +DX, y, z)   -> FR + DX columns
+                        //   absolute:     (x, y, z)         -> REFX column
+                        let fr = '', dx = '', refx = '', refy = '', refz = '';
+                        const posFrame = body.match(/POS,?\s+\(\s*#\s*(-?\s*\d+)\s*([+-]\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*\)/);
+                        const posAbs = body.match(/POS,?\s+\(\s*(-?\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*,\s*(-?\s*[\d.]+)\s*\)/);
+                        if (posFrame) {
+                            fr = parseInt(stripWS(posFrame[1]));
+                            dx = parseFloat(stripWS(posFrame[2]));
+                            refy = parseFloat(stripWS(posFrame[3]));
+                            refz = parseFloat(stripWS(posFrame[4]));
+                        } else if (posAbs) {
+                            refx = parseFloat(stripWS(posAbs[1]));
+                            refy = parseFloat(stripWS(posAbs[2]));
+                            refz = parseFloat(stripWS(posAbs[3]));
+                        } else {
+                            continue; // no parsable position -> skip this block
+                        }
+
+                        const conM = body.match(/CON,?\s+([\w.\-][\w.\-\s]*?),\s*SEA/);
+                        const conn = conM ? conM[1].trim() + ', SEA' : '';
+
+                        rows.push([id, des, wt, '', '', fr, dx, refx, refy, refz, conn, '']);
                     }
                     return rows;
                 }
