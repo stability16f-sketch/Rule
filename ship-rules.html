@@ -735,16 +735,16 @@
             <!-- Opening → NAPA 탭 -->
             <div id="openingTab" class="tab-content">
                 <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📄 Opening Data PDF → NAPA</h2>
-                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">Opening Data 형식의 PDF를 업로드하면 개구부 정보를 표 및 CSV로 추출합니다</p>
+                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">Opening Data 형식의 PDF 및 txt를 업로드하면 개구부 정보를 표 및 CSV로 추출합니다</p>
 
                 <!-- Upload -->
                 <div class="form-group">
-                    <label>📂 PDF 파일 업로드</label>
+                    <label>📂 PDF / TXT 파일 업로드</label>
                     <div id="op-dropzone" style="border:2px dashed #e5e7eb; border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#f8fafc;">
-                        <input type="file" id="op-fileInput" accept=".pdf" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
+                        <input type="file" id="op-fileInput" accept=".pdf,.txt" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
                         <div style="font-size:2rem; margin-bottom:10px;">⬆️</div>
-                        <div style="font-size:0.9rem; color:#64748b;">PDF 파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
-                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:6px;">Opening Data 형식의 PDF만 지원됩니다</div>
+                        <div style="font-size:0.9rem; color:#64748b;">PDF / TXT 파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
+                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:6px;">Opening Data 형식의 PDF 또는 TXT를 지원합니다</div>
                         <div id="op-fileName" style="margin-top:10px; font-family:monospace; font-size:0.78rem; color:#10b981; display:none;"></div>
                     </div>
                 </div>
@@ -832,29 +832,37 @@
                 document.getElementById('op-downloadBtn').addEventListener('click', downloadCSV);
 
                 async function handleFile(file) {
-                    if (!file || file.type !== 'application/pdf') { showError('PDF 파일만 업로드 가능합니다.'); return; }
+                    if (!file) { showError('파일을 업로드해 주세요.'); return; }
+                    const name = file.name.toLowerCase();
+                    const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
+                    const isTxt = file.type === 'text/plain' || name.endsWith('.txt');
+                    if (!isPdf && !isTxt) { showError('PDF 또는 TXT 파일만 업로드 가능합니다.'); return; }
                     showError('');
                     fileNameEl.textContent = '📎 ' + file.name;
                     fileNameEl.style.display = 'block';
                     document.getElementById('op-statusMsg').textContent = '파싱 중...';
                     try {
-                        const ab = await file.arrayBuffer();
-                        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
                         let fullText = '';
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const tc = await page.getTextContent();
-                            fullText += tc.items.map(it => it.str).join(' ') + '\n';
+                        if (isTxt) {
+                            fullText = await file.text();
+                        } else {
+                            const ab = await file.arrayBuffer();
+                            const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const tc = await page.getTextContent();
+                                fullText += tc.items.map(it => it.str).join(' ') + '\n';
+                            }
                         }
                         parsedRows = parseOpeningData(fullText);
                         if (parsedRows.length === 0) {
-                            showError('Opening Data를 찾을 수 없습니다. 올바른 형식의 PDF인지 확인해 주세요.');
+                            showError('Opening Data를 찾을 수 없습니다. 올바른 형식의 파일인지 확인해 주세요.');
                             document.getElementById('op-statusMsg').textContent = '';
                             return;
                         }
                         renderResults();
                     } catch (e) {
-                        showError('PDF 읽기 오류: ' + e.message);
+                        showError('파일 읽기 오류: ' + e.message);
                         document.getElementById('op-statusMsg').textContent = '';
                     }
                 }
