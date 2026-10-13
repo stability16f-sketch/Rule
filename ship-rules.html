@@ -904,7 +904,11 @@
                             continue; // no parsable position -> skip this block
                         }
 
-                        const conM = body.match(/CON,?\s+([\w.\-][\w.\-\s]*?),\s*SEA/);
+                        // CON order also differs between formats; output is always "<COMP>, SEA":
+                        //   PDF: CON, R139, SEA       TXT: CON, SEA, R139
+                        const conSeaFirst = body.match(/CON,?\s+SEA\s*,\s*([\w.\-]+(?:\s*-\s*[\w.\-]+)*)/);
+                        const conSeaLast = body.match(/CON,?\s+([\w.\-][\w.\-\s]*?),\s*SEA/);
+                        const conM = conSeaFirst || conSeaLast;
                         const conn = conM ? conM[1].trim() + ', SEA' : '';
 
                         rows.push([id, des, wt, '', '', fr, dx, refx, refy, refz, conn, '']);
