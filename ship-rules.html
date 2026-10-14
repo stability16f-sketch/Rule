@@ -3,451 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <title>KR STABILITY</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Retrofit.html 과 같은 디자인 토큰 */
+        :root {
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --border: #dfe4ec;
+            --text: #1b2330;
+            --muted: #5f6b7d;
+            --accent: #1f4e8c;
+            --accent-soft: #e6eef9;
+            --ok: #1d7a4a;
+            --ok-soft: #e3f4ea;
+            --warn: #9a5b00;
+            --warn-soft: #fdf1dc;
+            --danger: #b42318;
+            --danger-soft: #fde8e6;
+            --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+            --radius: 10px;
+            --hdr-h: 100px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        button, input, select { font: inherit; color: inherit; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
             min-height: 100vh;
-            background: linear-gradient(to bottom, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
-            position: relative;
-            overflow-x: hidden;
         }
 
-        /* 바다 애니메이션 */
-        .ocean {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom,
-                rgba(30, 58, 138, 0.3) 0%,
-                rgba(59, 130, 246, 0.5) 50%,
-                rgba(14, 165, 233, 0.7) 100%);
-            z-index: 0;
+        /* ---------- header / tabs ---------- */
+        .app-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 20;
         }
+        .header-inner {
+            max-width: 1280px; margin: 0 auto; padding: 14px 16px 0;
+            display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 24px;
+        }
+        .brand h1 { font-size: 18px; font-weight: 700; letter-spacing: .01em; }
+        .brand p { color: var(--muted); font-size: 12.5px; }
 
-        .wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 200%;
-            height: 150px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,50 Q300,0 600,50 T1200,50 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: 600px 120px;
-            animation: wave 15s linear infinite;
+        .tabs { display: flex; gap: 2px; width: 100%; overflow-x: auto; }
+        .tab-btn {
+            border: 0; background: none; padding: 10px 14px; cursor: pointer;
+            color: var(--muted); border-bottom: 2px solid transparent;
+            white-space: nowrap; font-weight: 500; font-size: 14px;
         }
+        .tab-btn:hover { color: var(--accent); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        .wave:nth-child(2) {
-            bottom: 20px;
-            opacity: 0.5;
-            animation: wave 10s linear infinite reverse;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        @keyframes wave {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-600px); }
-        }
-
-        /* 선박 애니메이션 */
-        .ship {
-            position: fixed;
-            bottom: 180px;
-            right: -200px;
-            font-size: 60px;
-            animation: sail 30s linear infinite;
-            z-index: 1;
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
-        }
-
-        @keyframes sail {
-            0% { right: -200px; }
-            100% { right: 100%; }
-        }
-
-        .container {
-            position: relative;
-            z-index: 10;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
+        /* ---------- layout ---------- */
+        .container { max-width: 1280px; margin: 0 auto; padding: 20px 16px 60px; }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
         }
+        /* 개조 검토 탭은 iframe 이 자체 카드를 가지므로 바깥 카드를 걷어낸다 */
+        .card.bare { background: none; border: 0; box-shadow: none; padding: 0; }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+        .tab-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .tab-desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
 
+        /* ---------- form ---------- */
+        .form-group { margin-bottom: 18px; }
         .form-group label {
-            display: block;
-            font-weight: 600;
-            color: #1e3a8a;
-            margin-bottom: 10px;
-            font-size: 16px;
+            display: block; font-weight: 500; font-size: 13px;
+            color: var(--text); margin-bottom: 6px;
         }
-
         .form-group select,
         .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
-            background: white;
+            width: 100%; padding: 9px 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: var(--surface-2); font-size: 14px;
         }
-
         .form-group select:focus,
-        .form-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+        .form-group input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-col { display: flex; flex-direction: column; }
 
         .checkbox-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px; margin-top: 4px;
         }
-
         .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background: #f8fafc;
-            border-radius: 8px;
-            transition: background 0.2s;
+            display: flex; align-items: center; padding: 8px 10px;
+            border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2);
         }
+        .checkbox-item:hover { border-color: var(--accent); }
+        .checkbox-item:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+        .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; margin-right: 8px; cursor: pointer; accent-color: var(--accent); }
+        .checkbox-item label { cursor: pointer; margin: 0; font-size: 13px; font-weight: 400; }
 
-        .checkbox-item:hover {
-            background: #e0f2fe;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 10px;
-            cursor: pointer;
-            accent-color: #3b82f6;
-        }
-
-        .checkbox-item label {
-            cursor: pointer;
-            margin: 0;
-            font-size: 14px;
-            color: #334155;
-        }
-
+        /* ---------- buttons ---------- */
         .search-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
+            width: 100%; padding: 11px; margin-top: 6px;
+            background: var(--accent); color: #fff; border: 1px solid var(--accent);
+            border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer;
         }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
-        }
-
-        .search-btn:active {
-            transform: translateY(0);
-        }
+        .search-btn:hover { filter: brightness(1.08); }
+        .search-btn:disabled { opacity: .5; cursor: default; }
 
         .pdf-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 15px;
-            display: none;
+            width: 100%; padding: 10px 16px; margin-top: 12px;
+            background: var(--surface); color: var(--accent);
+            border: 1px solid var(--accent); border-radius: 8px;
+            font-size: 14px; font-weight: 500; cursor: pointer; display: none;
+        }
+        .pdf-btn:hover { background: var(--accent-soft); }
+        .pdf-btn.show { display: block; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-row .pdf-btn { width: auto; flex: 1 1 220px; }
+        .btn-sm {
+            padding: 6px 10px; background: var(--accent); color: #fff; border: 0;
+            border-radius: 6px; cursor: pointer; font-size: 12.5px; white-space: nowrap;
+        }
+        .btn-sm:hover { filter: brightness(1.08); }
+
+        /* ---------- results (규칙 검색) ---------- */
+        .result { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: none; }
+        .result.show { display: block; }
+        .result h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+        .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+        .result-item {
+            background: var(--surface); padding: 12px 14px;
+            border: 1px solid var(--border); border-radius: 8px;
+        }
+        .result-item h4 { margin-bottom: 6px; font-size: 14px; font-weight: 700; }
+        .result-item p { color: var(--muted); line-height: 1.6; font-size: 13px; }
+        .section-h {
+            font-size: 14px; font-weight: 700; margin: 20px 0 6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-h::before { content: ""; width: 4px; height: 14px; border-radius: 2px; background: currentColor; }
+
+        .badge {
+            display: inline-block; background: var(--accent-soft); color: var(--accent);
+            padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500;
+            margin: 0 4px 6px 0;
+        }
+        .badge.ok { background: var(--ok-soft); color: var(--ok); }
+
+        /* ---------- file tools (Hull Form / Opening) ---------- */
+        .dropzone {
+            border: 2px dashed var(--border); border-radius: var(--radius);
+            padding: 32px 20px; text-align: center; cursor: pointer;
+            position: relative; background: var(--surface-2); color: var(--muted);
+        }
+        .dropzone:hover, .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+        .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+        .dropzone .dz-main { font-size: 14px; }
+        .dropzone .dz-main b { color: var(--accent); font-weight: 500; }
+        .dropzone .dz-sub { font-size: 12px; margin-top: 4px; }
+        .dropzone .dz-file { margin-top: 10px; font-family: Consolas, monospace; font-size: 12.5px; color: var(--ok); display: none; }
+
+        .stats { display: grid; gap: 10px; margin-bottom: 16px; }
+        .stat {
+            border: 1px solid var(--border); background: var(--surface-2);
+            border-radius: 8px; padding: 12px; text-align: center;
+        }
+        .stat .v { font-family: Consolas, monospace; font-size: 20px; font-weight: 700; color: var(--accent); }
+        .stat .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .stat.danger { background: var(--danger-soft); border-color: transparent; }
+        .stat.danger .v { color: var(--danger); }
+
+        .mono-box {
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px; overflow-y: auto; font-family: Consolas, "D2Coding", monospace;
+            font-size: 12px; color: var(--text);
+        }
+        .progress { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+        .progress > div { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; transition: width .3s; }
+        .error-box {
+            display: none; color: var(--danger); font-size: 13px; margin-bottom: 14px;
+            padding: 10px 14px; background: var(--danger-soft); border-radius: 8px;
+        }
+        .sub-panel { flex: 1; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--surface-2); }
+        .sub-panel h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+        .sub-panel .lbl { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+        .sub-panel input, .sub-panel select {
+            padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 13px; background: var(--surface);
         }
 
-        .pdf-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        /* ---------- 개조 검토 (Retrofit.html iframe) ---------- */
+        #retrofitFrame {
+            display: block; width: 100%; border: 0; border-radius: var(--radius);
+            height: calc(100vh - var(--hdr-h) - 36px); min-height: 520px; background: var(--bg);
         }
+        .container:has(.card.bare) { padding-bottom: 16px; }
 
-        .pdf-btn:active {
-            transform: translateY(0);
-        }
-
-        .pdf-btn.show {
-            display: block;
-        }
-
-        .result {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-            display: none;
-        }
-
-        .result.show {
-            display: block;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result h3 {
-            color: #1e40af;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 1024px) {
-            .result-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
+        @media (max-width: 1024px) { .result-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 768px) {
-            .result-grid {
-                grid-template-columns: 1fr;
-            }
+            .result-grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .card { padding: 16px; }
         }
 
         /* PDF 인쇄 스타일 */
         @media print {
-            body {
-                background: white;
-            }
-
-            .ocean, .ship, .header, .card form, .pdf-btn {
-                display: none !important;
-            }
-
-            .container {
-                max-width: 100%;
-                padding: 0;
-            }
-
-            .card {
-                background: white;
-                box-shadow: none;
-                padding: 20px;
-            }
-
-            .result {
-                display: block !important;
-                background: white;
-                border: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .result h3 {
-                color: #000;
-                font-size: 24px;
-                margin-bottom: 20px;
-                page-break-after: avoid;
-            }
-
-            .result-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-            }
-
-            .result-item {
-                background: white;
-                border: 1px solid #ddd;
-                padding: 12px;
-                page-break-inside: avoid;
-            }
-
-            .result-item h4 {
-                color: #000;
-                font-size: 14px;
-                margin-bottom: 6px;
-            }
-
-            .result-item p {
-                color: #333;
-                font-size: 12px;
-                line-height: 1.5;
-            }
-
-            .badge {
-                background: #eee;
-                color: #333;
-                border: 1px solid #ccc;
-            }
-        }
-
-        .result-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .result-item h4 {
-            color: #1e3a8a;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-
-        .result-item p {
-            color: #4b5563;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .badge {
-            display: inline-block;
-            background: #3b82f6;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-right: 5px;
-            margin-bottom: 5px;
-        }
-
-        /* 2컬럼 폼 레이아웃 */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 10px;
-        }
-
-        .form-col {
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* 탭 스타일 */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .tab-btn {
-            padding: 12px 30px;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            color: #64748b;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: -2px;
-        }
-
-        .tab-btn:hover {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        .tab-btn.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-
-        .tab-content.active {
-            display: block;
+            body { background: #fff; }
+            .app-header, .card form, .pdf-btn { display: none !important; }
+            .container { max-width: 100%; padding: 0; }
+            .card { box-shadow: none; border: 0; padding: 0; }
+            .result { display: block !important; border: 0; margin: 0; padding: 0; }
+            .result-grid { grid-template-columns: 1fr 1fr; }
+            .result-item { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-    <div class="ocean">
-        <div class="wave"></div>
-        <div class="wave"></div>
-    </div>
-    <div class="ship">🚢</div>
+    <header class="app-header" id="appHeader">
+        <div class="header-inner">
+            <div class="brand">
+                <h1>KR STABILITY</h1>
+                <p>개조 검토 · 선형/개구부 데이터 변환 · 보간 계산</p>
+            </div>
+            <nav class="tabs">
+                <!-- 규칙 검색 탭은 현재 사용하지 않아 숨김 (코드는 유지) -->
+                <button class="tab-btn" data-tab="rules" onclick="switchTab('rules')" hidden>규칙 검색</button>
+                <button class="tab-btn" data-tab="retrofit" onclick="switchTab('retrofit')">개조 검토</button>
+                <button class="tab-btn" data-tab="hullform" onclick="switchTab('hullform')">Hull Form PDF → TXT</button>
+                <button class="tab-btn" data-tab="opening" onclick="switchTab('opening')">Opening → NAPA</button>
+                <button class="tab-btn" data-tab="interpolation" onclick="switchTab('interpolation')">Cubic Spline 계산기</button>
+            </nav>
+        </div>
+    </header>
 
     <div class="container">
-        <div class="header">
-            <h1>⚓ KR STABILITY</h1>
-            <p>선박의 종류, 항해구역, 길이를 입력하여 적용되는 규칙을 확인하세요</p>
-        </div>
-
-        <div class="card">
-            <!-- 탭 네비게이션 -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('rules')">🔍 규칙 검색</button>
-                <button class="tab-btn" onclick="switchTab('hullform')">⚓ Hull Form PDF → TXT</button>
-                <button class="tab-btn" onclick="switchTab('opening')">📄 Opening → NAPA</button>
-                <button class="tab-btn" onclick="switchTab('interpolation')">📈 Cubic Spline 계산기</button>
-            </div>
-
+        <div class="card" id="mainCard">
             <!-- 규칙 검색 탭 -->
-            <div id="rulesTab" class="tab-content active">
+            <div id="rulesTab" class="tab-content">
+                <h2 class="tab-title">적용 규칙 검색</h2>
+                <p class="tab-desc">선박의 종류, 항해구역, 길이를 입력하여 적용되는 규칙을 확인하세요</p>
                 <form id="shipForm">
                 <div class="form-row">
                     <div class="form-col">
@@ -560,22 +370,23 @@
                     </div>
                 </div>
 
-                <button type="submit" class="search-btn">🔍 적용 규칙 검색</button>
+                <button type="submit" class="search-btn">적용 규칙 검색</button>
             </form>
 
             <div id="result" class="result">
-                <h3>📋 적용되는 규칙</h3>
+                <h3>적용되는 규칙</h3>
                 <div id="resultContent"></div>
             </div>
 
                 <button id="pdfBtn" class="pdf-btn" onclick="downloadPDF()">
-                    🖨️ PDF로 저장 (인쇄)
+                    PDF로 저장 (인쇄)
                 </button>
             </div>
 
             <!-- 보간 계산기 탭 -->
             <div id="interpolationTab" class="tab-content">
-                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📈 Cubic Spline 보간 계산기</h2>
+                <h2 class="tab-title">Cubic Spline 보간 계산기</h2>
+                <p class="tab-desc">X·Y 데이터로 3차 스플라인 보간값을 계산하고 곡선을 그립니다</p>
 
                 <div class="form-group">
                     <label>X 값 (쉼표로 구분)</label>
@@ -592,11 +403,11 @@
                     <input type="number" id="interpolateX" value="21.5" step="0.1" placeholder="예: 21.5">
                 </div>
 
-                <button class="search-btn" onclick="calculateInterpolation()">📊 보간 계산</button>
+                <button class="search-btn" onclick="calculateInterpolation()">보간 계산</button>
 
-                <div id="interpolationResult" style="display: none; margin-top: 20px; padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 10px;">
-                    <h3 style="color: #1e40af; margin-bottom: 10px;">계산 결과</h3>
-                    <p id="resultText" style="font-size: 18px; font-weight: 600; color: #1e3a8a;"></p>
+                <div id="interpolationResult" style="display: none; margin-top: 20px; padding: 14px 16px; background: var(--accent-soft); border-radius: 8px;">
+                    <h3 style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">계산 결과</h3>
+                    <p id="resultText" style="font-size: 17px; font-weight: 700; color: var(--accent);"></p>
                 </div>
 
                 <div style="margin-top: 30px;">
@@ -606,101 +417,90 @@
 
             <!-- Hull Form PDF → TXT 탭 -->
             <div id="hullformTab" class="tab-content">
-                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">⚓ Hull Form PDF / TXT → TXT</h2>
-                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">HULL FORM DATA PDF 또는 TXT를 업로드하면 섹션별 XYZ 좌표를 TXT 파일로 추출합니다</p>
+                <h2 class="tab-title">Hull Form PDF / TXT → TXT</h2>
+                <p class="tab-desc">HULL FORM DATA PDF 또는 TXT를 업로드하면 섹션별 XYZ 좌표를 TXT 파일로 추출합니다</p>
 
                 <!-- Upload -->
                 <div class="form-group">
-                    <label>📂 파일 업로드 (PDF / TXT)</label>
-                    <div id="hf-dropzone" style="border:2px dashed #e5e7eb; border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#f8fafc;">
-                        <input type="file" id="hf-fileInput" accept=".pdf,.txt" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
-                        <div style="font-size:2rem; margin-bottom:10px;">📄</div>
-                        <div style="font-size:0.9rem; color:#64748b;">파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
-                        <div id="hf-fileName" style="margin-top:10px; font-family:monospace; font-size:0.78rem; color:#10b981; display:none;"></div>
+                    <label>파일 업로드 (PDF / TXT)</label>
+                    <div id="hf-dropzone" class="dropzone">
+                        <input type="file" id="hf-fileInput" accept=".pdf,.txt" />
+                        <div class="dz-main">파일을 끌어다 놓거나 <b>클릭하여 선택</b></div>
+                        <div class="dz-sub">HULL FORM DATA 형식의 PDF 또는 TXT</div>
+                        <div id="hf-fileName" class="dz-file"></div>
                     </div>
                     <div id="hf-progressWrap" style="display:none; margin-top:14px;">
-                        <div style="height:4px; background:#e5e7eb; border-radius:99px; overflow:hidden;">
-                            <div id="hf-progressFill" style="height:100%; background:linear-gradient(90deg,#3b82f6,#10b981); border-radius:99px; width:0%; transition:width 0.3s;"></div>
-                        </div>
-                        <div id="hf-progressText" style="font-family:monospace; font-size:0.72rem; color:#64748b; margin-top:6px;">처리 중...</div>
+                        <div class="progress"><div id="hf-progressFill"></div></div>
+                        <div id="hf-progressText" style="font-family:Consolas,monospace; font-size:12px; color:var(--muted); margin-top:6px;">처리 중...</div>
                     </div>
                 </div>
 
                 <!-- Stats -->
-                <div id="hf-stats" style="display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
-                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                        <div id="hf-statSections" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">섹션</div>
-                    </div>
-                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                        <div id="hf-statPoints" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">총 좌표점</div>
-                    </div>
-                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                        <div id="hf-statSheets" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                        <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">시트 수</div>
-                    </div>
+                <div id="hf-stats" class="stats" style="display:none; grid-template-columns:repeat(3,1fr);">
+                    <div class="stat"><div id="hf-statSections" class="v">0</div><div class="l">섹션</div></div>
+                    <div class="stat"><div id="hf-statPoints" class="v">0</div><div class="l">총 좌표점</div></div>
+                    <div class="stat"><div id="hf-statSheets" class="v">0</div><div class="l">시트 수</div></div>
                 </div>
 
                 <div id="hf-sectionsList" style="display:none; margin-bottom:14px;"></div>
 
-                <button class="search-btn" id="hf-parseBtn" onclick="hfParsePDF()" style="display:none;">🔍 좌표 추출 시작</button>
+                <button class="search-btn" id="hf-parseBtn" onclick="hfParsePDF()" style="display:none;">좌표 추출 시작</button>
 
                 <!-- Preview -->
                 <div class="form-group" style="margin-top:20px;">
-                    <label>👁 TXT 미리보기</label>
-                    <div id="hf-previewBox" style="display:none; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:180px; overflow-y:auto; font-family:monospace; font-size:0.72rem; color:#334155; white-space:pre;"></div>
+                    <label>TXT 미리보기</label>
+                    <div id="hf-previewBox" class="mono-box" style="display:none; height:180px; white-space:pre;"></div>
                 </div>
 
                 <!-- Log -->
                 <div class="form-group">
-                    <label>🖥 처리 로그</label>
-                    <div id="hf-logBox" style="display:none; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:120px; overflow-y:auto; font-family:monospace; font-size:0.72rem; color:#64748b;"></div>
+                    <label>처리 로그</label>
+                    <div id="hf-logBox" class="mono-box" style="display:none; height:120px;"></div>
                 </div>
 
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">📥 TXT 다운로드</button>
-                    <button class="pdf-btn" id="hf-downloadCurvesBtn" onclick="hfDownloadCurves()" style="display:none; background:linear-gradient(135deg,#0891b2,#0369a1);">📐 NAPA Curves 다운로드 (CBM·STM·BTM·STATION)</button>
-                    <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none; background:linear-gradient(135deg,#7c3aed,#4f46e5);">⚓ NAPA Modeling 다운로드</button>
+                <div class="btn-row">
+                    <button class="pdf-btn" id="hf-downloadBtn" onclick="hfDownloadTXT()" style="display:none;">TXT 다운로드</button>
+                    <button class="pdf-btn" id="hf-downloadCurvesBtn" onclick="hfDownloadCurves()" style="display:none;">NAPA Curves 다운로드 (CBM·STM·BTM·STATION)</button>
+                    <button class="pdf-btn" id="hf-downloadNapaBtn" onclick="hfDownloadNAPA()" style="display:none;">NAPA Modeling 다운로드</button>
                 </div>
 
                 <!-- NAPA Curves 편집기 -->
-                <div id="hf-editSection" style="display:none; margin-top:24px; border-top:2px solid #e5e7eb; padding-top:20px;">
-                    <h3 style="font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:16px;">✏️ NAPA Curves 편집기</h3>
+                <div id="hf-editSection" style="display:none; margin-top:24px; border-top:1px solid var(--border); padding-top:20px;">
+                    <h3 style="font-size:15px; font-weight:700; margin-bottom:12px;">NAPA Curves 편집기</h3>
                     <div style="display:flex; gap:16px; flex-wrap:wrap;">
 
                         <!-- STM 편집 -->
-                        <div style="flex:1; min-width:280px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:16px;">
-                            <h4 style="font-size:0.9rem; font-weight:700; color:#0369a1; margin-bottom:12px;">📏 STM 편집</h4>
+                        <div class="sub-panel" style="min-width:280px;">
+                            <h4>STM 편집</h4>
                             <div style="margin-bottom:10px;">
-                                <label style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:4px;">현재 STM 정의</label>
-                                <div id="hf-stmPreview" style="background:white; border:1px solid #e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:0.7rem; color:#334155; max-height:100px; overflow-y:auto; white-space:pre;"></div>
+                                <label class="lbl">현재 STM 정의</label>
+                                <div id="hf-stmPreview" class="mono-box" style="background:var(--surface); padding:8px; max-height:100px; white-space:pre;"></div>
                             </div>
                             <div style="margin-bottom:8px;">
-                                <label style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:4px;">앞에 좌표 추가 (X, Z)</label>
+                                <label class="lbl">앞에 좌표 추가 (X, Z)</label>
                                 <div style="display:flex; gap:6px; align-items:center;">
-                                    <input type="number" id="hf-stmPrependX" step="any" placeholder="X" style="flex:1; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.8rem;">
-                                    <input type="number" id="hf-stmPrependZ" step="any" placeholder="Z" style="flex:1; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.8rem;">
-                                    <button onclick="hfStmAdd('prepend')" style="padding:5px 10px; background:#0891b2; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8rem; white-space:nowrap;">+앞</button>
+                                    <input type="number" id="hf-stmPrependX" step="any" placeholder="X" style="flex:1; min-width:0;">
+                                    <input type="number" id="hf-stmPrependZ" step="any" placeholder="Z" style="flex:1; min-width:0;">
+                                    <button class="btn-sm" onclick="hfStmAdd('prepend')">+앞</button>
                                 </div>
                             </div>
                             <div style="margin-bottom:14px;">
-                                <label style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:4px;">뒤에 좌표 추가 (X, Z)</label>
+                                <label class="lbl">뒤에 좌표 추가 (X, Z)</label>
                                 <div style="display:flex; gap:6px; align-items:center;">
-                                    <input type="number" id="hf-stmAppendX" step="any" placeholder="X" style="flex:1; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.8rem;">
-                                    <input type="number" id="hf-stmAppendZ" step="any" placeholder="Z" style="flex:1; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.8rem;">
-                                    <button onclick="hfStmAdd('append')" style="padding:5px 10px; background:#0891b2; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8rem; white-space:nowrap;">+뒤</button>
+                                    <input type="number" id="hf-stmAppendX" step="any" placeholder="X" style="flex:1; min-width:0;">
+                                    <input type="number" id="hf-stmAppendZ" step="any" placeholder="Z" style="flex:1; min-width:0;">
+                                    <button class="btn-sm" onclick="hfStmAdd('append')">+뒤</button>
                                 </div>
                             </div>
-                            <button onclick="hfRegenSTM()" style="width:100%; padding:8px; background:linear-gradient(135deg,#0891b2,#0369a1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">🔄 STM 재생성</button>
+                            <button class="btn-sm" onclick="hfRegenSTM()" style="width:100%; padding:8px;">STM 재생성</button>
                         </div>
 
                         <!-- STATION 분리 -->
-                        <div style="flex:1; min-width:320px; background:#fefce8; border:1px solid #fde047; border-radius:10px; padding:16px;">
-                            <h4 style="font-size:0.9rem; font-weight:700; color:#854d0e; margin-bottom:12px;">✂️ STATION 분리</h4>
+                        <div class="sub-panel" style="min-width:320px;">
+                            <h4>STATION 분리</h4>
                             <div style="margin-bottom:10px;">
-                                <label style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:4px;">스테이션 선택</label>
-                                <select id="hf-stSelect" onchange="hfLoadSt()" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:0.82rem; background:white;">
+                                <label class="lbl">스테이션 선택</label>
+                                <select id="hf-stSelect" onchange="hfLoadSt()" style="width:100%;">
                                     <option value="">-- 선택 --</option>
                                 </select>
                             </div>
@@ -718,67 +518,54 @@
                                     <div id="hf-stDn" style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:6px; padding:5px; min-height:70px; max-height:140px; overflow-y:auto;"></div>
                                 </div>
                             </div>
-                            <p style="font-size:0.7rem; color:#92400e; margin-bottom:8px;">좌표를 클릭하면 원본→UP→DN→원본 순으로 이동합니다</p>
-                            <button onclick="hfDivideSt()" style="width:100%; padding:8px; background:linear-gradient(135deg,#d97706,#b45309); color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">✂️ Divide</button>
+                            <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">좌표를 클릭하면 원본→UP→DN→원본 순으로 이동합니다</p>
+                            <button class="btn-sm" onclick="hfDivideSt()" style="width:100%; padding:8px;">Divide</button>
                         </div>
                     </div>
 
                     <!-- WL + HULL 재생성 -->
                     <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; align-items:center;">
-                        <button onclick="hfRegenWLHull()" style="padding:10px 22px; background:linear-gradient(135deg,#059669,#047857); color:white; border:none; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:600;">🌊 WL + HULL 재생성</button>
-                        <button id="hf-dlRegenBtn" onclick="hfDlRegen()" style="display:none; padding:10px 22px; background:linear-gradient(135deg,#7c3aed,#4f46e5); color:white; border:none; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:600;">📥 수정본 다운로드</button>
+                        <button class="btn-sm" onclick="hfRegenWLHull()" style="padding:9px 18px;">WL + HULL 재생성</button>
+                        <button class="btn-sm" id="hf-dlRegenBtn" onclick="hfDlRegen()" style="display:none; padding:9px 18px;">수정본 다운로드</button>
                     </div>
-                    <div id="hf-regenPreview" style="display:none; margin-top:12px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; height:150px; overflow-y:auto; font-family:monospace; font-size:0.7rem; color:#334155; white-space:pre;"></div>
+                    <div id="hf-regenPreview" class="mono-box" style="display:none; margin-top:12px; height:150px; white-space:pre;"></div>
                 </div>
             </div>
 
             <!-- Opening → NAPA 탭 -->
             <div id="openingTab" class="tab-content">
-                <h2 style="color: #1e3a8a; margin-bottom: 20px; text-align: center;">📄 Opening Data PDF → NAPA</h2>
-                <p style="text-align:center; color:#64748b; margin-bottom:24px; font-size:14px;">Opening Data 형식의 PDF 및 txt를 업로드하면 개구부 정보를 표 및 CSV로 추출합니다</p>
+                <h2 class="tab-title">Opening Data PDF → NAPA</h2>
+                <p class="tab-desc">Opening Data 형식의 PDF 및 txt를 업로드하면 개구부 정보를 표 및 CSV로 추출합니다</p>
 
                 <!-- Upload -->
                 <div class="form-group">
-                    <label>📂 PDF / TXT 파일 업로드</label>
-                    <div id="op-dropzone" style="border:2px dashed #e5e7eb; border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#f8fafc;">
-                        <input type="file" id="op-fileInput" accept=".pdf,.txt" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;" />
-                        <div style="font-size:2rem; margin-bottom:10px;">⬆️</div>
-                        <div style="font-size:0.9rem; color:#64748b;">PDF / TXT 파일을 끌어다 놓거나 <span style="color:#3b82f6; font-weight:600;">클릭하여 선택</span></div>
-                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:6px;">Opening Data 형식의 PDF 또는 TXT를 지원합니다</div>
-                        <div id="op-fileName" style="margin-top:10px; font-family:monospace; font-size:0.78rem; color:#10b981; display:none;"></div>
+                    <label>PDF / TXT 파일 업로드</label>
+                    <div id="op-dropzone" class="dropzone">
+                        <input type="file" id="op-fileInput" accept=".pdf,.txt" />
+                        <div class="dz-main">PDF / TXT 파일을 끌어다 놓거나 <b>클릭하여 선택</b></div>
+                        <div class="dz-sub">Opening Data 형식의 PDF 또는 TXT를 지원합니다</div>
+                        <div id="op-fileName" class="dz-file"></div>
                     </div>
                 </div>
 
-                <div id="op-errorMsg" style="display:none; color:#a32d2d; font-size:13px; margin-bottom:14px; padding:10px 14px; background:#fcebeb; border-radius:8px; border:1px solid #f09595;"></div>
+                <div id="op-errorMsg" class="error-box"></div>
 
                 <div id="op-resultSection" style="display:none;">
                     <!-- Stats -->
-                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
-                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                            <div id="op-totalCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">전체 개구부</div>
-                        </div>
-                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                            <div id="op-apCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">Air Pipe (AP)</div>
-                        </div>
-                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; text-align:center;">
-                            <div id="op-otherCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#3b82f6;">0</div>
-                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">VT / HT / DR</div>
-                        </div>
-                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; text-align:center;">
-                            <div id="op-unpCount" style="font-family:monospace; font-size:1.3rem; font-weight:700; color:#dc2626;">0</div>
-                            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">UNPROTECTED</div>
-                        </div>
+                    <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+                        <div class="stat"><div id="op-totalCount" class="v">0</div><div class="l">전체 개구부</div></div>
+                        <div class="stat"><div id="op-apCount" class="v">0</div><div class="l">Air Pipe (AP)</div></div>
+                        <div class="stat"><div id="op-otherCount" class="v">0</div><div class="l">VT / HT / DR</div></div>
+                        <div class="stat danger"><div id="op-unpCount" class="v">0</div><div class="l">UNPROTECTED</div></div>
                     </div>
 
                     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;">
-                        <button class="pdf-btn" id="op-downloadBtn" style="display:inline-block; width:auto; margin-top:0; padding:10px 22px; font-size:0.9rem;">📥 CSV 다운로드</button>
-                        <button class="pdf-btn" id="op-resetBtn" style="display:inline-block; width:auto; margin-top:0; padding:10px 22px; font-size:0.9rem; background:linear-gradient(135deg,#64748b,#475569);">🔄 다시 업로드</button>
+                        <button class="pdf-btn" id="op-downloadBtn" style="display:inline-block; width:auto; margin-top:0;">CSV 다운로드</button>
+                        <button class="pdf-btn" id="op-resetBtn" style="display:inline-block; width:auto; margin-top:0; color:var(--muted); border-color:var(--border);">다시 업로드</button>
                         <span id="op-statusMsg" style="font-size:13px; color:#64748b; margin-left:auto;"></span>
                     </div>
 
-                    <div style="overflow:auto; border:1px solid #e8e8e6; border-radius:10px; background:#fff; max-height:480px;">
+                    <div style="overflow:auto; border:1px solid var(--border); border-radius:8px; background:var(--surface); max-height:480px;">
                         <table id="op-table" style="width:100%; border-collapse:collapse; font-size:12px;">
                             <thead><tr id="op-thead"></tr></thead>
                             <tbody id="op-tbody"></tbody>
@@ -787,8 +574,13 @@
                 </div>
             </div>
 
+            <!-- 개조 검토 탭: Retrofit.html 을 그대로 포함 -->
+            <div id="retrofitTab" class="tab-content">
+                <iframe id="retrofitFrame" title="개조 검토" data-src="Retrofit.html?embed"></iframe>
+            </div>
+
             <style>
-                #op-table th{background:#f5f5f4;padding:9px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e8e8e6;white-space:nowrap;position:sticky;top:0;z-index:1;color:#1c1c1a;}
+                #op-table th{background:var(--surface-2);padding:9px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e8e8e6;white-space:nowrap;position:sticky;top:0;z-index:1;color:#1c1c1a;}
                 #op-table td{padding:7px 12px;border-bottom:1px solid #f0f0ee;white-space:nowrap;color:#1c1c1a;}
                 #op-table tr:last-child td{border-bottom:none;}
                 #op-table tr:hover td{background:#fafaf9;}
@@ -810,12 +602,11 @@
                 const errorMsg = document.getElementById('op-errorMsg');
                 const fileNameEl = document.getElementById('op-fileName');
 
-                dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor='#3b82f6'; dropZone.style.background='rgba(59,130,246,0.05)'; });
-                dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor='#e5e7eb'; dropZone.style.background='#f8fafc'; });
+                dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
                 dropZone.addEventListener('drop', e => {
                     e.preventDefault();
-                    dropZone.style.borderColor='#e5e7eb';
-                    dropZone.style.background='#f8fafc';
+                    dropZone.classList.remove('over');
                     const f = e.dataTransfer.files[0];
                     if (f) handleFile(f);
                 });
@@ -986,10 +777,10 @@
     // Hull Form 전용 스크립트
     (function() {
         const dz = document.getElementById('hf-dropzone');
-        dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='#3b82f6'; dz.style.background='rgba(59,130,246,0.05)'; });
-        dz.addEventListener('dragleave', () => { dz.style.borderColor='#e5e7eb'; dz.style.background='#f8fafc'; });
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('over'));
         dz.addEventListener('drop', e => {
-            e.preventDefault(); dz.style.borderColor='#e5e7eb'; dz.style.background='#f8fafc';
+            e.preventDefault(); dz.classList.remove('over');
             const f = e.dataTransfer.files[0];
             if (f) hfHandleFile(f);
         });
@@ -1020,7 +811,7 @@
     function hfLog(msg, type) {
         const box = document.getElementById('hf-logBox');
         const line = document.createElement('div');
-        const colors = { ok: '#10b981', err: '#ef4444', info: '#3b82f6', '': '#64748b' };
+        const colors = { ok: '#1d7a4a', err: '#b42318', info: '#1f4e8c', '': '#5f6b7d' };
         line.style.color = colors[type || ''] || '#64748b';
         line.style.marginBottom = '3px';
         line.textContent = '> ' + msg;
@@ -1098,8 +889,8 @@
         for (const [name, data] of Object.entries(sections)) {
             const cnt = Array.isArray(data) ? data.length : Object.values(data).reduce((a,b)=>a+b.length,0);
             const item = document.createElement('div');
-            item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f0f9ff; border-radius:6px; margin-bottom:6px; font-size:0.82rem;';
-            item.innerHTML = '<span>' + name + '</span><span style="font-family:monospace;font-size:0.7rem;padding:2px 8px;border-radius:99px;background:rgba(59,130,246,0.15);color:#3b82f6;">' + cnt + '점</span>';
+            item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; margin-bottom:6px; font-size:13px;';
+            item.innerHTML = '<span>' + name + '</span><span style="font-family:monospace;font-size:0.7rem;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);">' + cnt + '점</span>';
             list.appendChild(item);
         }
 
@@ -1788,29 +1579,32 @@
     <script>
         // 탭 전환 함수
         function switchTab(tabName) {
-            // 모든 탭 버튼과 컨텐츠의 active 클래스 제거
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-
-            // 선택된 탭 활성화
-            if (tabName === 'rules') {
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-                document.getElementById('rulesTab').classList.add('active');
-            } else if (tabName === 'hullform') {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('hullformTab').classList.add('active');
-            } else if (tabName === 'opening') {
-                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
-                document.getElementById('openingTab').classList.add('active');
-            } else if (tabName === 'interpolation') {
-                document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
-                document.getElementById('interpolationTab').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn =>
+                btn.classList.toggle('active', btn.dataset.tab === tabName));
+            document.querySelectorAll('.tab-content').forEach(content =>
+                content.classList.toggle('active', content.id === tabName + 'Tab'));
+            // 개조 검토 탭은 iframe 자체 카드를 쓰므로 바깥 카드 제거, 처음 열 때 로드
+            document.getElementById('mainCard').classList.toggle('bare', tabName === 'retrofit');
+            if (tabName === 'retrofit') {
+                const frame = document.getElementById('retrofitFrame');
+                if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
             }
+            try { history.replaceState(null, '', '#' + tabName); } catch (e) {}
         }
+
+        // 헤더 높이 → iframe 높이 계산용
+        function syncHeaderHeight() {
+            const h = document.getElementById('appHeader').offsetHeight;
+            document.documentElement.style.setProperty('--hdr-h', h + 'px');
+        }
+        window.addEventListener('resize', syncHeaderHeight);
+        syncHeaderHeight();
+
+        // 주소의 #탭이름 으로 바로 열기 (예: ship-rules.html#hullform), 기본은 개조 검토
+        (function () {
+            const t = location.hash.slice(1);
+            switchTab(t && t !== 'rules' && document.getElementById(t + 'Tab') ? t : 'retrofit');
+        })();
 
         // 선박 규칙을 반환하는 함수 - {협약, 선급, 안전법} 객체 반환
         function getRules(nationality, shipType, voyageArea, length, gt, dwt) {
@@ -2116,7 +1910,7 @@
             const totalRules = categorizedRules.협약.length + categorizedRules.선급.length + categorizedRules.안전법.length + notationRules.length;
 
             if (totalRules === 0) {
-                resultContent.innerHTML = '<p style="color: #ef4444;">해당 조건에 대한 규칙 정보가 없습니다.</p>';
+                resultContent.innerHTML = '<p style="color: var(--danger);">해당 조건에 대한 규칙 정보가 없습니다.</p>';
             } else {
                 let html = '<div style="margin-bottom: 20px;">';
                 html += `<span class="badge">국적: ${getNationalityName(nationality)}</span>`;
@@ -2136,7 +1930,7 @@
                         'liqbc': 'LIQBC (1/2)', 'csr': 'CSR'
                     };
                     notations.forEach(n => {
-                        html += `<span class="badge" style="background: #059669;">${notationNames[n]}</span>`;
+                        html += `<span class="badge ok">${notationNames[n]}</span>`;
                     });
                 }
                 html += '</div>';
@@ -2144,11 +1938,11 @@
                 // 섹션 렌더링 헬퍼
                 function renderSection(title, icon, rules, borderColor, bgColor, titleColor) {
                     if (rules.length === 0) return '';
-                    let s = `<h4 style="color: ${titleColor}; margin: 20px 0 10px; font-size: 16px; border-bottom: 2px solid ${borderColor}; padding-bottom: 8px;">${icon} ${title}</h4>`;
+                    let s = `<h4 class="section-h" style="color: ${titleColor};">${title} <span class="badge" style="margin:0">${rules.length}</span></h4>`;
                     s += '<div class="result-grid">';
                     rules.forEach(rule => {
-                        s += `<div class="result-item" style="border-left: 4px solid ${borderColor}; background: ${bgColor};">
-                            <h4 style="color: ${titleColor};">✓ ${rule}</h4>
+                        s += `<div class="result-item" style="border-left: 3px solid ${borderColor};">
+                            <h4>${rule}</h4>
                             <p>${descriptions[rule] || '규칙 설명이 준비 중입니다.'}</p>
                         </div>`;
                     });
@@ -2156,10 +1950,10 @@
                     return s;
                 }
 
-                html += renderSection('협약', '📜', categorizedRules.협약, '#3b82f6', '#eff6ff', '#1e40af');
-                html += renderSection('선급', '🏗️', categorizedRules.선급, '#7c3aed', '#faf5ff', '#6d28d9');
-                html += renderSection('안전법', '⚖️', categorizedRules.안전법, '#d97706', '#fffbeb', '#b45309');
-                html += renderSection('선급부호', '⚓', notationRules, '#10b981', '#f0fdf4', '#059669');
+                html += renderSection('협약', '', categorizedRules.협약, '#1f4e8c', '', '#1f4e8c');
+                html += renderSection('선급', '', categorizedRules.선급, '#6b4fa0', '', '#6b4fa0');
+                html += renderSection('안전법', '', categorizedRules.안전법, '#9a5b00', '', '#9a5b00');
+                html += renderSection('선급부호', '', notationRules, '#1d7a4a', '', '#1d7a4a');
 
                 resultContent.innerHTML = html;
             }

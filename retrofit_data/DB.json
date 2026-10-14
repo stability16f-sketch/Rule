@@ -1,0 +1,49 @@
+{
+  "DB": [
+    {
+      "개조": "Cargo Tank 용량변경, 추가등",
+      "조치해야할 도면": "- INTACT STABILITY BOOKLET\n- LOADING MANUAL\n  (INCL. TYPICAL LOADING UNLOADING)\n- DAMAGE STABILITY BOOKLET\n- LOADING INSTRUMENT TEST REPORT (권고)\n- GRAIN STABILITY BOOKLET",
+      "비고": "-"
+    },
+    {
+      "개조": "Water Ballast Tank 용도변경",
+      "조치해야할 도면": "A. Consumable tank로 변경 \n - INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT (권고)\n\nB. MISC. tank,VOID로 변경 \n  - [KR NOTE] 부착 // 강도, 용량등 고려 X",
+      "비고": "- 하기 Note를 복원성 관련도면에 부착하고 현장검사원 확인 받도록 \"C\" Comment \n\n[KR Note] \nThe No.5 W.B TANK(P) has been changed to dual purpose tank of No.5 W.B TANK(P) / treated sewage storage tank\". Accordingly, the Master is responsible for acknowledging this change and establishing the loading/discharge plan."
+    },
+    {
+      "개조": "Bunker tank (FO, LO, DO, FW)",
+      "조치해야할 도면": "A. 다른 용도의 Consumable tank로 변경 시\n   (ex. HFO -> LFHO, FWT -> DWT 등)\n  - [KR NOTE] 부착 // 강도, 용량등 고려 X\n\nB. MISC. tank, VOID로 변경\n  - [KR NOTE] 부착 // 강도, 용량등 고려 X\n\nC. 전혀 다른 탱크로 변경 시 (W.B.T, C.O.T 등)\n - INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT (권고)",
+      "비고": "-"
+    },
+    {
+      "개조": "Draft Increase",
+      "조치해야할 도면": "- INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT\n - GRAIN STABILITY BOOKLET\n - TOTAL RES. CALCULATION",
+      "비고": "-"
+    },
+    {
+      "개조": "Draft Decrease",
+      "조치해야할 도면": "- EEDI/EEXI Technical file (주요개조)",
+      "비고": "- 하기 Note를 복원성 관련도면에 부착하고 현장검사원 확인 받도록 \"C\" Comment \n\n[KR Note]\nThe freeboard was newly assigned as of 10th Oct, 2023 (f=2649 mm, Draft (mould) = 4.674m). Therefore, the master shall keep loading up to a newly assigned freeboard."
+    },
+    {
+      "개조": "LWT Change",
+      "조치해야할 도면": "# 누적 개조량이 SC297 / 선박안전법 기준을 초과하는 경우, 개조 완료 및 출항전 최소 Prov. 도면 승인 필요\n\n - RESULT OF I/E & D/M\n - INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT\n - EEDI/EEXI Technical file",
+      "비고": "# SC297\n              경사시험  //  복원성 자료 \n - LWT :            2% //  2% ~ 1% \n - LCG :            1% //  1% ~ 0.5% (Lf 기준)\n - VCG :           1% //  1% ~ 0.5\n\n# 선박안전법 시행규칙 \n             경사시험  //  복원성 자료 \n - LWT :  Max(2%, 2ton) //  2% ~ 1% \n - LCG :        1% //  1% ~ 0.5% (LBP 기준)\n - VCG 大 : LWT 0.5%초과시 복원성 자료 재승인\n - VCG 小 : LWT 1.5%초과시 복원성 자료 재승인\n\n * 개조후 여객선의 VCG 상승 및 화물선 경하상태의 GoM이 0 미만으로 변경되는 개조는 불가하므로 사전에 확인 하도록 안내 할 것"
+    },
+    {
+      "개조": "Ship type change \nFrom Chemical to Oil/Chemical Tanker",
+      "조치해야할 도면": "- INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT (if need)\n - MARPOL I/23",
+      "비고": "-"
+    },
+    {
+      "개조": "Ship type change \nFrom Oil to Oil / Chemical Tanker",
+      "조치해야할 도면": "- INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET\n - LOADING INSTRUMENT TEST REPORT (if need)\n\n # Reflecting type II, 3,000m3 limit",
+      "비고": "-"
+    },
+    {
+      "개조": "On deck Cargo Loading",
+      "조치해야할 도면": "- INTACT STABILITY BOOKLET\n - LOADING MANUAL\n   (INCL. TYPICAL LOADING UNLOADING)\n - DAMAGE STABILITY BOOKLET (if need)\n - LOADING INSTRUMENT TEST REPORT \n\n # On-deck allowable uniform loading 반영 (구조기술 1팀 지정)\nICLL Damage 적용선박인 경우, SOLAS Damage 의 GM Curve 반영",
+      "비고": "-"
+    }
+  ]
+}

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // ship-rules.html 에 iframe 으로 포함될 때: 헤더 축소 + 상위 페이지와 같은 라이트 테마 고정
+  if (new URLSearchParams(location.search).has('embed')) {
+    document.documentElement.classList.add('embed');
+    document.documentElement.dataset.theme = 'light';
+  }
+</script>
+<title>Retrofit Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --border: #dfe4ec;
+  --text: #1b2330;
+  --muted: #5f6b7d;
+  --accent: #1f4e8c;
+  --accent-soft: #e6eef9;
+  --ok: #1d7a4a;
+  --ok-soft: #e3f4ea;
+  --warn: #9a5b00;
+  --warn-soft: #fdf1dc;
+  --danger: #b42318;
+  --danger-soft: #fde8e6;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --surface: #1a212b; --surface-2: #151b23; --border: #2c3644;
+    --text: #e6ebf2; --muted: #9aa6b8; --accent: #7fb0f0; --accent-soft: #1d2b40;
+    --ok: #6fd19c; --ok-soft: #173126; --warn: #f0b860; --warn-soft: #34290f;
+    --danger: #f28b82; --danger-soft: #3a1c1a; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #1a212b; --surface-2: #151b23; --border: #2c3644;
+  --text: #e6ebf2; --muted: #9aa6b8; --accent: #7fb0f0; --accent-soft: #1d2b40;
+  --ok: #6fd19c; --ok-soft: #173126; --warn: #f0b860; --warn-soft: #34290f;
+  --danger: #f28b82; --danger-soft: #3a1c1a; --shadow: none;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 14px; line-height: 1.6;
+}
+button, input, select { font: inherit; color: inherit; }
+
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto; padding: 14px 16px 0;
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 24px;
+}
+.brand h1 { font-size: 18px; font-weight: 700; }
+.brand p { color: var(--muted); font-size: 12.5px; }
+.status { margin-left: auto; font-size: 12px; color: var(--muted); padding-bottom: 6px; }
+.status.err { color: var(--danger); }
+
+/* ship-rules.html 탭 안에 iframe 으로 들어갈 때 (?embed) — 상위 헤더와 겹치는 제목/상태줄 숨김 */
+.embed { --sticky-top: 60px; }
+.embed .brand, .embed .status { display: none; }
+.embed .header-inner { padding-top: 4px; }
+nav.tabs { display: flex; gap: 2px; width: 100%; overflow-x: auto; }
+nav.tabs button {
+  border: 0; background: none; padding: 10px 14px; cursor: pointer;
+  color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500;
+}
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 60px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.card-h { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-h h2 { font-size: 15px; font-weight: 700; }
+.card-h h3 { font-size: 14px; font-weight: 700; }
+.card-b { padding: 14px 16px; }
+.hint { color: var(--muted); font-size: 12.5px; }
+.pre { white-space: pre-wrap; word-break: break-word; }
+
+.btn {
+  border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; font-size: 13px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); color: #fff; }
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+.spacer { margin-left: auto; }
+
+.tag {
+  display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); white-space: nowrap; font-weight: 500;
+}
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.danger { background: var(--danger-soft); color: var(--danger); }
+.tag.muted { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+
+.search {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-2);
+}
+.search:focus, input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* ---------- Tab 1: cases ---------- */
+.case-layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+.case-list { position: sticky; top: var(--sticky-top, 110px); max-height: calc(100vh - var(--sticky-top, 110px) - 20px); display: flex; flex-direction: column; }
+.case-list .card-b { overflow-y: auto; padding: 8px; }
+.case-item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 8px;
+  cursor: pointer; border: 1px solid transparent;
+}
+.case-item:hover { background: var(--surface-2); }
+.case-item.on { background: var(--accent-soft); border-color: var(--accent); }
+.case-item input { margin-top: 4px; accent-color: var(--accent); }
+.case-item .nm { font-weight: 500; white-space: pre-line; }
+.case-item .sub { font-size: 12px; color: var(--muted); }
+
+.result { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+
+.checklist { list-style: none; }
+.checklist li {
+  display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px;
+  border-bottom: 1px dashed var(--border);
+}
+.checklist li:last-child { border-bottom: 0; }
+.checklist input { margin-top: 4px; accent-color: var(--ok); width: 16px; height: 16px; }
+.checklist .dw { font-weight: 500; }
+.checklist .done .dw { text-decoration: line-through; color: var(--muted); }
+.checklist .src { font-size: 12px; color: var(--muted); }
+.checklist .meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+
+.option-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.option-row label {
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  font-size: 13px; background: var(--surface-2);
+}
+.option-row label.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.option-row input { display: none; }
+.opt-desc { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+ul.plain { padding-left: 18px; }
+ul.plain li { margin: 2px 0; }
+.note {
+  border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 8px 12px;
+  border-radius: 0 6px 6px 0; margin-top: 10px; font-size: 13px;
+}
+.krnote {
+  margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2);
+}
+.krnote .h { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12.5px; font-weight: 700; }
+.krnote .b { padding: 8px 10px; font-family: Consolas, "D2Coding", monospace; font-size: 12.5px; }
+details.remark { margin-top: 10px; }
+details.remark summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 500; }
+details.remark .pre { margin-top: 6px; font-family: Consolas, "D2Coding", "Malgun Gothic", monospace; font-size: 12.5px; background: var(--surface-2); padding: 10px; border-radius: 6px; border: 1px solid var(--border); overflow-x: auto; }
+
+/* LWT calculator */
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.calc-grid label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
+.calc-grid input, .calc-grid select {
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text);
+}
+.grp-title { font-size: 12.5px; font-weight: 700; margin: 12px 0 6px; color: var(--text); }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.tbl th, table.tbl td { border-bottom: 1px solid var(--border); padding: 7px 8px; text-align: left; vertical-align: top; }
+table.tbl th { background: var(--surface-2); font-weight: 700; font-size: 12.5px; color: var(--muted); }
+table.tbl td.num { font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; }
+
+/* ---------- Tab 2: navigation area ---------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 14px 16px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.on { background: var(--accent); color: #fff; font-weight: 500; }
+.tb-group { display: flex; align-items: center; gap: 8px; }
+.tb-group > span { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.arrow { color: var(--muted); font-size: 18px; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.chk input { accent-color: var(--accent); }
+
+.req-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.req .card-h .law { font-size: 12px; color: var(--muted); white-space: pre-line; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; }
+.cmp > div { padding: 12px 16px; min-width: 0; }
+.cmp > div + div { border-left: 1px solid var(--border); }
+.cmp .lbl { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-bottom: 4px; letter-spacing: .02em; }
+.cmp .after { background: var(--accent-soft); }
+.req.same .cmp .after { background: transparent; }
+.req .remark-box { border-top: 1px solid var(--border); padding: 10px 16px; font-size: 12.5px; color: var(--muted); }
+.callout {
+  margin-top: 16px; padding: 12px 16px; border-radius: var(--radius);
+  background: var(--accent-soft); border: 1px solid var(--accent); font-size: 13px;
+}
+.callout b { color: var(--accent); }
+table.all td { white-space: pre-wrap; min-width: 180px; }
+table.all td:first-child { min-width: 140px; font-weight: 500; }
+
+/* ---------- Tab 3: definitions ---------- */
+.def-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.def ol { padding-left: 20px; }
+.def ol li { margin: 3px 0; }
+.def .sub-h { font-size: 12.5px; font-weight: 700; margin: 12px 0 4px; color: var(--muted); }
+.def .note { border-left-color: var(--accent); background: var(--accent-soft); }
+mark { background: #ffe58a; color: inherit; border-radius: 2px; }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 8px; font-size: 13px;
+  opacity: 0; transition: .2s; pointer-events: none; z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .case-layout { grid-template-columns: 1fr; }
+  .case-list { position: static; max-height: 360px; }
+  .cmp { grid-template-columns: 1fr; }
+  .cmp > div + div { border-left: 0; border-top: 1px solid var(--border); }
+}
+@media print {
+  header, .case-list, .no-print, .toast { display: none !important; }
+  body { background: #fff; }
+  .case-layout { display: block; }
+  .card { box-shadow: none; break-inside: avoid; margin-bottom: 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <h1>선박 개조 검토</h1>
+      <p>개조 Case별 승인 도면 · 항해구역 변경 요건 · 주요개조 정의</p>
+    </div>
+    <div class="status" id="status">데이터 불러오는 중…</div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="cases" aria-selected="true">① 개조 Case 검토</button>
+      <button role="tab" data-tab="area" aria-selected="false">② 항해구역 변경 요건</button>
+      <button role="tab" data-tab="defs" aria-selected="false">③ 주요개조 정의</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="loadError" class="card empty" hidden>
+    <p style="font-size:15px;font-weight:500;color:var(--danger)">데이터를 불러오지 못했습니다</p>
+    <p><code>retrofit_data</code> 폴더가 Retrofit.html 과 같은 위치에 있는지 확인하고,
+      <code>python retrofit_data/build_data.py</code> 를 실행해 <code>data.js</code> 를 만들어 주세요.</p>
+  </section>
+
+  <!-- Tab 1 -->
+  <section class="panel active" id="panel-cases">
+    <div class="case-layout">
+      <aside class="card case-list">
+        <div class="card-h">
+          <h2>개조 항목</h2>
+          <span class="tag muted" id="caseCount"></span>
+          <button class="btn sm spacer" id="clearCases">선택 해제</button>
+        </div>
+        <div style="padding:10px 10px 0"><input class="search" id="caseSearch" placeholder="개조 항목 검색"></div>
+        <div class="card-b" id="caseList"></div>
+      </aside>
+      <div class="result" id="caseResult"></div>
+    </div>
+  </section>
+
+  <!-- Tab 2 -->
+  <section class="panel" id="panel-area">
+    <div class="card">
+      <div class="toolbar">
+        <div class="tb-group"><span>현재</span><div class="seg" id="areaFrom"></div></div>
+        <span class="arrow">→</span>
+        <div class="tb-group"><span>변경</span><div class="seg" id="areaTo"></div></div>
+        <label class="chk"><input type="checkbox" id="onlyDiff"> 달라지는 항목만</label>
+        <label class="chk"><input type="checkbox" id="showAll"> 4개 구역 전체 표로 보기</label>
+        <input class="search" id="areaSearch" placeholder="항목·조항 검색" style="max-width:220px">
+      </div>
+    </div>
+    <div id="areaCallout"></div>
+    <div id="areaBody"></div>
+  </section>
+
+  <!-- Tab 3 -->
+  <section class="panel" id="panel-defs">
+    <div class="card">
+      <div class="toolbar">
+        <input class="search" id="defSearch" placeholder="규정·키워드 검색 (예: EEXI, freeboard, 용도변경)" style="max-width:420px">
+        <span class="hint" id="defTitle"></span>
+      </div>
+    </div>
+    <div class="def-list" id="defBody"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA_FILES = {
+  db:   'retrofit_data/DB.json',
+  defs: 'retrofit_data/주요개조.json',
+  area: 'retrofit_data/항해구역+길이별 요건.json',
+};
+const DATA_JS = 'retrofit_data/data.js';
+const AREAS = ['평수', '연해', '근해', '국제'];
+const STORE_KEY = 'retrofit-review-v1';
+
+const state = { db: null, defs: null, area: null, selected: [], options: {}, done: {}, from: '연해', to: '국제' };
+
+/* ---------------- utils ---------------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s ?? '').replace(/\s+/g, ' ').trim();
+function highlight(text, q) {
+  const safe = esc(text);
+  if (!q) return safe;
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  return safe.replace(re, m => `<mark>${m}</mark>`);
+}
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('복사했습니다'); }
+  catch { toast('복사 실패 — 직접 선택해서 복사해 주세요'); }
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ selected: state.selected, options: state.options, done: state.done, from: state.from, to: state.to })); } catch {}
+}
+function restore() {
+  try { Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY)) || {}); } catch {}
+}
+// JSON 끝에 붙은 잔재(``` 등)가 있어도 읽히도록 마지막 '}'까지만 파싱
+function parseLoose(text) {
+  text = text.replace(/^﻿/, '');
+  return JSON.parse(text.slice(0, text.lastIndexOf('}') + 1));
+}
+
+/* ---------------- data loading ----------------
+ * 1) 웹 서버에서 열면 JSON 원본을 직접 fetch (항상 최신)
+ * 2) 파일로 직접 열면(file://) fetch 가 막히므로 build_data.py 가 만든 data.js 를 <script> 로 로드
+ */
+async function fetchJson() {
+  const entries = await Promise.all(Object.entries(DATA_FILES).map(async ([k, p]) => {
+    const r = await fetch(encodeURI(p), { cache: 'no-cache' });
+    if (!r.ok) throw new Error(`${p}: ${r.status}`);
+    return [k, parseLoose(await r.text())];
+  }));
+  return Object.fromEntries(entries);
+}
+function loadDataJs() {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = DATA_JS + '?v=' + Date.now();
+    s.onload = () => window.RETROFIT_DATA ? resolve(window.RETROFIT_DATA) : reject(new Error('RETROFIT_DATA 없음'));
+    s.onerror = () => reject(new Error(DATA_JS + ' 로드 실패'));
+    document.head.appendChild(s);
+  });
+}
+async function loadAll() {
+  restore();
+  let data;
+  try { data = await fetchJson(); }
+  catch (e) {
+    try { data = await loadDataJs(); }
+    catch (e2) {
+      console.error(e, e2);
+      $('#status').textContent = '데이터 로드 실패';
+      $('#status').classList.add('err');
+      document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+      $('#loadError').hidden = false;
+      return;
+    }
+  }
+  Object.assign(state, { db: data.db, defs: data.defs, area: data.area });
+  ready();
+}
+function ready() {
+  const s = $('#status');
+  s.classList.remove('err');
+  s.textContent = `개조 Case ${state.db.DB.length}건 · 요건 ${state.area['요건비교'].length}항목 · 정의 ${state.defs.sections.length}건`;
+  state.selected = state.selected.filter(i => i < state.db.DB.length);
+  renderCaseList();
+  renderCaseResult();
+  initArea();
+  initDefs();
+}
+
+/* ---------------- Tab 1: 개조 Case ---------------- */
+// "조치해야할 도면" 텍스트 → { groups: [{label, title, desc[], items[], notes[]}] }
+function parseActions(text) {
+  const groups = [];
+  let g = { label: null, title: '', desc: [], items: [], notes: [] };
+  groups.push(g);
+  for (const raw of String(text || '').split('\n')) {
+    const t = raw.trim();
+    if (!t) continue;
+    const m = t.match(/^([A-Z])\.\s*(.*)$/);
+    if (m) { g = { label: m[1], title: m[2], desc: [], items: [], notes: [] }; groups.push(g); continue; }
+    if (t.startsWith('#')) { g.notes.push(t.replace(/^#\s*/, '')); continue; }
+    if (t.startsWith('-')) { g.items.push(t.replace(/^-\s*/, '')); continue; }
+    if (t.startsWith('(') && g.items.length) { g.items[g.items.length - 1] += ' ' + t; continue; }
+    if (!g.items.length && g.label) { g.desc.push(t); continue; }
+    g.notes.push(t);
+  }
+  const first = groups[0];
+  if (groups.length > 1 && !first.items.length && !first.desc.length) {
+    // 그룹 앞의 공통 노트는 모든 옵션에 붙인다
+    groups.slice(1).forEach(x => x.notes.unshift(...first.notes));
+    groups.shift();
+  }
+  return groups;
+}
+// 도면 한 줄 → { name, qual, key, krnote }
+const QUAL_RE = /\s*\((권고|if need|주요개조)\)\s*/i;
+function parseItem(s) {
+  const qm = s.match(QUAL_RE);
+  const name = norm(s.replace(QUAL_RE, ' '));
+  return { name, qual: qm ? qm[1] : null, key: name.toUpperCase(), krnote: /\[KR NOTE\]/i.test(s) };
+}
+// 비고 → { text, krnote }
+function parseRemark(text) {
+  const t = String(text || '').trim();
+  if (!t || t === '-') return { text: '', krnote: '' };
+  const idx = t.search(/\[KR Note\]/i);
+  if (idx < 0) return { text: t, krnote: '' };
+  return { text: t.slice(0, idx).trim(), krnote: t.slice(idx).replace(/\[KR Note\]/i, '').trim() };
+}
+const caseName = c => norm(c['개조']);
+
+function renderCaseList() {
+  const q = norm($('#caseSearch').value).toLowerCase();
+  const list = $('#caseList');
+  list.innerHTML = state.db.DB.map((c, i) => {
+    const hay = (c['개조'] + c['조치해야할 도면'] + c['비고']).toLowerCase();
+    if (q && !hay.includes(q)) return '';
+    const on = state.selected.includes(i);
+    const groups = parseActions(c['조치해야할 도면']);
+    const sub = groups.length > 1 ? `세부 조건 ${groups.length}가지` : `도면 ${groups[0].items.length}종`;
+    return `<label class="case-item ${on ? 'on' : ''}">
+      <input type="checkbox" data-i="${i}" ${on ? 'checked' : ''}>
+      <div><div class="nm">${highlight(c['개조'].trim(), q)}</div><div class="sub">${sub}</div></div>
+    </label>`;
+  }).join('') || '<p class="hint" style="padding:10px">검색 결과 없음</p>';
+  $('#caseCount').textContent = `${state.selected.length} 선택`;
+}
+
+function selectedGroups(i) {
+  const c = state.db.DB[i];
+  const groups = parseActions(c['조치해야할 도면']);
+  if (groups.length === 1) return { groups, chosen: groups[0] };
+  const label = state.options[i] && groups.find(g => g.label === state.options[i]) ? state.options[i] : groups[0].label;
+  return { groups, chosen: groups.find(g => g.label === label) };
+}
+
+function buildChecklist() {
+  const map = new Map();
+  for (const i of state.selected) {
+    const { chosen } = selectedGroups(i);
+    for (const raw of chosen.items) {
+      const it = parseItem(raw);
+      if (!map.has(it.key)) map.set(it.key, { ...it, quals: new Set(), required: false, sources: [] });
+      const e = map.get(it.key);
+      if (it.qual) e.quals.add(it.qual); else e.required = true;
+      e.sources.push(caseName(state.db.DB[i]));
+    }
+  }
+  return [...map.values()];
+}
+
+function renderCaseResult() {
+  const box = $('#caseResult');
+  if (!state.selected.length) {
+    box.innerHTML = `<div class="card empty">
+      <p style="font-size:15px;font-weight:500;color:var(--text)">왼쪽에서 개조 항목을 선택하세요</p>
+      <p>여러 개를 선택하면 승인 도면을 하나의 체크리스트로 합쳐 보여줍니다.</p></div>`;
+    return;
+  }
+  const items = buildChecklist();
+  const nDone = items.filter(it => state.done[it.key]).length;
+  const checklist = `
+    <div class="card">
+      <div class="card-h">
+        <h2>승인 필요 도면 체크리스트</h2>
+        <span class="tag ${nDone === items.length && items.length ? 'ok' : 'muted'}">${nDone} / ${items.length}</span>
+        <span class="spacer"></span>
+        <button class="btn sm no-print" id="copySummary">요약 복사</button>
+        <button class="btn sm no-print" onclick="window.print()">인쇄</button>
+      </div>
+      <div class="card-b">
+        ${items.length ? `<ul class="checklist">${items.map(it => {
+          const tags = [];
+          if (it.krnote) tags.push('<span class="tag warn">조치사항</span>');
+          else if (!it.required) [...it.quals].forEach(q => tags.push(`<span class="tag ${q === '권고' ? 'muted' : 'warn'}">${esc(q)}</span>`));
+          return `<li class="${state.done[it.key] ? 'done' : ''}">
+            <input type="checkbox" data-key="${esc(it.key)}" ${state.done[it.key] ? 'checked' : ''}>
+            <div><div class="dw">${esc(it.name)}</div>
+              <div class="meta">${tags.join('')}<span class="src">${esc([...new Set(it.sources)].join(' · '))}</span></div></div>
+          </li>`;
+        }).join('')}</ul>` : '<p class="hint">선택한 조건에 해당하는 도면이 없습니다.</p>'}
+      </div>
+    </div>`;
+
+  const details = state.selected.map(i => {
+    const c = state.db.DB[i];
+    const { groups, chosen } = selectedGroups(i);
+    const rm = parseRemark(c['비고']);
+    const opts = groups.length > 1 ? `<div class="option-row no-print">${groups.map(g => `
+        <label class="${g === chosen ? 'on' : ''}"><input type="radio" name="opt-${i}" data-i="${i}" value="${g.label}" ${g === chosen ? 'checked' : ''}>${g.label}. ${esc(g.title)}</label>`).join('')}</div>` : '';
+    const isLWT = /LWT/i.test(c['개조']);
+    return `<div class="card">
+      <div class="card-h"><h3 class="pre">${esc(c['개조'].trim())}</h3>
+        ${groups.length > 1 ? `<span class="tag">${chosen.label}. ${esc(chosen.title)}</span>` : ''}</div>
+      <div class="card-b">
+        ${opts}
+        ${chosen.desc.map(d => `<div class="opt-desc">${esc(d)}</div>`).join('')}
+        <ul class="plain">${chosen.items.map(s => `<li>${esc(norm(s))}</li>`).join('')}</ul>
+        ${chosen.notes.map(n => `<div class="note pre">${esc(n)}</div>`).join('')}
+        ${rm.krnote ? `<div class="krnote">
+            <div class="h">[KR Note] 예시 문안 — 복원성 관련 도면에 부착, 현장검사원 확인 "C" Comment
+              <button class="btn sm spacer no-print" data-copy="${esc('[KR Note]\n' + rm.krnote)}">복사</button></div>
+            <div class="b pre">${esc(rm.krnote)}</div></div>` : ''}
+        ${rm.text && !isLWT ? `<details class="remark" open><summary>비고</summary><div class="pre">${esc(rm.text)}</div></details>` : ''}
+        ${isLWT ? lwtCalculator(rm.text) : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML = checklist + details;
+  if (state.selected.some(i => /LWT/i.test(state.db.DB[i]['개조']))) bindLwt();
+}
+
+function summaryText() {
+  const lines = [`[선박 개조 검토 요약] ${new Date().toISOString().slice(0, 10)}`, '', '■ 개조 항목'];
+  for (const i of state.selected) {
+    const { groups, chosen } = selectedGroups(i);
+    lines.push(`- ${caseName(state.db.DB[i])}${groups.length > 1 ? ` (${chosen.label}. ${chosen.title})` : ''}`);
+  }
+  lines.push('', '■ 승인 필요 도면 / 조치사항');
+  for (const it of buildChecklist()) {
+    const q = !it.required && it.quals.size ? ` (${[...it.quals].join(', ')})` : '';
+    lines.push(`${state.done[it.key] ? '[v]' : '[ ]'} ${it.name}${q}`);
+  }
+  const notes = state.selected.flatMap(i => selectedGroups(i).chosen.notes.map(n => `- ${n}`));
+  if (notes.length) lines.push('', '■ 참고', ...notes);
+  return lines.join('\n');
+}
+
+/* LWT 변경: SC297 / 선박안전법 기준 비교 (참고용) */
+function lwtCalculator(remark) {
+  const f = (id, label, ph = '') => `<label>${label}<input type="number" step="any" id="${id}" placeholder="${ph}"></label>`;
+  return `<div class="no-print" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <b>경하중량 변화 검토</b></div>
+    <p class="hint" style="margin-top:4px">최종 승인된 경하중량 대비 <b>누적</b> 개조량으로 입력하세요.</p>
+    <div class="grp-title">최종 승인 경하상태</div>
+    <div class="calc-grid">${f('w0', 'LWT (t)')}${f('l0', 'LCG (m)')}${f('v0', 'VCG (m)')}${f('lf', 'Lf (m)', 'SC297')}${f('lbp', 'LBP (m)', '선박안전법')}</div>
+    <div class="grp-title">개조 후 (추정)</div>
+    <div class="calc-grid">${f('w1', 'LWT (t)')}${f('l1', 'LCG (m)')}${f('v1', 'VCG (m)')}</div>
+    <div id="lwtOut" style="margin-top:12px"></div>
+  </div>
+  <details class="remark"><summary>기준 원문 (비고)</summary><div class="pre">${esc(remark)}</div></details>`;
+}
+function bindLwt() {
+  const ids = ['w0', 'l0', 'v0', 'lf', 'lbp', 'w1', 'l1', 'v1'];
+  const saved = state.lwt || {};
+  ids.forEach(id => { const el = $('#' + id); if (!el) return; el.value = saved[id] ?? ''; el.oninput = calcLwt; });
+  calcLwt();
+}
+function calcLwt() {
+  const v = {};
+  ['w0', 'l0', 'v0', 'lf', 'lbp', 'w1', 'l1', 'v1'].forEach(id => { const el = $('#' + id); v[id] = el && el.value !== '' ? parseFloat(el.value) : NaN; });
+  state.lwt = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, isNaN(x) ? '' : x]));
+  const out = $('#lwtOut');
+  if (isNaN(v.w0) || isNaN(v.w1)) { out.innerHTML = '<p class="hint">LWT 값을 입력하면 기준과 비교합니다.</p>'; return; }
+
+  const dW = Math.abs(v.w1 - v.w0), pW = dW / v.w0 * 100;
+  const pLf = !isNaN(v.l0) && !isNaN(v.l1) && v.lf ? Math.abs(v.l1 - v.l0) / v.lf * 100 : NaN;
+  const pLbp = !isNaN(v.l0) && !isNaN(v.l1) && v.lbp ? Math.abs(v.l1 - v.l0) / v.lbp * 100 : NaN;
+  const pV = !isNaN(v.v0) && !isNaN(v.v1) && v.v0 ? Math.abs(v.v1 - v.v0) / v.v0 * 100 : NaN;
+  const vcgUp = !isNaN(v.v0) && !isNaN(v.v1) ? v.v1 > v.v0 : null;
+
+  // level: 2 = 경사시험, 1 = 복원성 자료 재승인, 0 = 기준 이내
+  const lv = (x, incl, upd) => isNaN(x) ? null : x > incl ? 2 : x > upd ? 1 : 0;
+  const pill = l => l === null ? '<span class="tag muted">입력 필요</span>'
+    : l === 2 ? '<span class="tag danger">경사시험</span>'
+    : l === 1 ? '<span class="tag warn">복원성 자료 재승인</span>'
+    : '<span class="tag ok">기준 이내</span>';
+  const fmt = x => isNaN(x) ? '–' : x.toFixed(2) + ' %';
+
+  const kInclW = Math.max(2, 2 / v.w0 * 100); // Max(2%, 2 t)
+  const rows = [
+    ['SC297', 'LWT', fmt(pW), '> 2% / 1~2%', lv(pW, 2, 1)],
+    ['SC297', 'LCG (Lf 기준)', fmt(pLf), '> 1% / 0.5~1%', lv(pLf, 1, 0.5)],
+    ['SC297', 'VCG', fmt(pV), '> 1% / 0.5~1%', lv(pV, 1, 0.5)],
+    ['선박안전법', 'LWT', `${fmt(pW)} (${dW.toFixed(1)} t)`, `> Max(2%, 2t) / 1~2%`, lv(pW, kInclW, 1)],
+    ['선박안전법', 'LCG (LBP 기준)', fmt(pLbp), '> 1% / 0.5~1%', lv(pLbp, 1, 0.5)],
+    ['선박안전법', vcgUp === null ? 'VCG' : vcgUp ? 'VCG 상승' : 'VCG 하강', fmt(pW) + ' (LWT)',
+      vcgUp === null ? 'VCG 입력 필요' : vcgUp ? 'LWT 0.5% 초과 시 재승인' : 'LWT 1.5% 초과 시 재승인',
+      vcgUp === null ? null : (pW > (vcgUp ? 0.5 : 1.5) ? 1 : 0)],
+  ];
+  out.innerHTML = `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>기준</th><th>항목</th><th>변화량</th><th>경사시험 / 복원성 자료</th><th>판정</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td>${r[3]}</td><td>${pill(r[4])}</td></tr>`).join('')}</tbody>
+  </table></div>
+  ${vcgUp ? '<div class="note">여객선의 VCG 상승, 화물선 경하상태 GoM &lt; 0 이 되는 개조는 불가 — 사전 확인 안내 필요</div>' : ''}`;
+  save();
+}
+
+/* events (tab 1) */
+$('#caseSearch').addEventListener('input', renderCaseList);
+$('#caseList').addEventListener('change', e => {
+  const i = +e.target.dataset.i;
+  if (Number.isNaN(i)) return;
+  state.selected = e.target.checked ? [...state.selected, i].sort((a, b) => a - b) : state.selected.filter(x => x !== i);
+  save(); renderCaseList(); renderCaseResult();
+});
+$('#clearCases').addEventListener('click', () => { state.selected = []; save(); renderCaseList(); renderCaseResult(); });
+$('#caseResult').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.key !== undefined) { state.done[t.dataset.key] = t.checked; save(); renderCaseResult(); }
+  else if (t.type === 'radio') { state.options[t.dataset.i] = t.value; save(); renderCaseResult(); }
+});
+$('#caseResult').addEventListener('click', e => {
+  if (e.target.id === 'copySummary') copyText(summaryText());
+  if (e.target.dataset.copy) copyText(e.target.dataset.copy);
+});
+
+/* ---------------- Tab 2: 항해구역 ---------------- */
+function initArea() {
+  const seg = (id, key) => {
+    const el = $('#' + id);
+    el.innerHTML = AREAS.map(a => `<button data-a="${a}" class="${state[key] === a ? 'on' : ''}">${a}</button>`).join('');
+    el.onclick = e => { const a = e.target.dataset.a; if (!a) return; state[key] = a; save(); initArea(); };
+  };
+  seg('areaFrom', 'from'); seg('areaTo', 'to');
+  renderArea();
+}
+function renderArea() {
+  const rows = state.area['요건비교'];
+  const q = norm($('#areaSearch').value).toLowerCase();
+  const onlyDiff = $('#onlyDiff').checked, showAll = $('#showAll').checked;
+  const { from, to } = state;
+  const match = r => !q || [r['항목'], r['관련조항'], ...AREAS.map(a => r[a]), r['비고']].join(' ').toLowerCase().includes(q);
+  const diff = r => norm(r[from]) !== norm(r[to]);
+
+  // 상단 안내
+  const dir = AREAS.indexOf(to) - AREAS.indexOf(from);
+  let callout = '';
+  if (dir !== 0) {
+    const nDiff = rows.filter(diff).length;
+    callout = `<div class="callout"><b>${from} → ${to}</b> (항해구역 ${dir > 0 ? '확대' : '축소'}) · 요건이 달라지는 항목 <b>${nDiff}</b> / ${rows.length}`;
+    if (dir > 0) callout += `<br>항해구역 확대 시 복원성은 해당 시점의 선박복원성기준을 적용합니다.`;
+    if (to === '국제') {
+      const conv = findNavConversion();
+      if (conv) callout += `<br><br><b>협약검사내규 1편 1.5.6 — 항행구역 변경 (${esc(conv.before)} → ${esc(conv.after)})</b>
+        <br>SOLAS: ${esc(conv.solas_application)}<br>MARPOL: ${esc(conv.marpol_application)}`;
+    }
+    callout += '</div>';
+  } else {
+    callout = `<div class="callout">현재와 변경 항해구역이 같습니다. 비교할 구역을 선택하세요.</div>`;
+  }
+  $('#areaCallout').innerHTML = callout;
+
+  const list = rows.filter(match).filter(r => !onlyDiff || diff(r));
+  if (showAll) {
+    $('#areaBody').innerHTML = `<div class="card" style="margin-top:16px"><div class="tbl-wrap"><table class="tbl all">
+      <thead><tr><th>항목 / 관련조항</th>${AREAS.map(a => `<th>${a}</th>`).join('')}<th>비고</th></tr></thead>
+      <tbody>${list.map(r => `<tr><td>${highlight(r['항목'], q)}<div class="hint">${highlight(r['관련조항'], q)}</div></td>
+        ${AREAS.map(a => `<td>${highlight(r[a], q)}</td>`).join('')}<td class="hint">${highlight(r['비고'] || '', q)}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
+    return;
+  }
+  $('#areaBody').innerHTML = `<div class="req-list">${list.map(r => {
+    const same = !diff(r);
+    return `<div class="card req ${same ? 'same' : ''}">
+      <div class="card-h"><h3>${highlight(r['항목'], q)}</h3>
+        <span class="tag ${same ? 'muted' : 'warn'}">${same ? '동일' : '변경'}</span>
+        <span class="law spacer">${highlight(r['관련조항'], q)}</span></div>
+      <div class="cmp">
+        <div><div class="lbl">현재 · ${from}</div><div class="pre">${highlight(r[from], q)}</div></div>
+        <div class="after"><div class="lbl">변경 · ${to}</div><div class="pre">${highlight(r[to], q)}</div></div>
+      </div>
+      ${r['비고'] ? `<div class="remark-box pre"><b>비고</b> ${highlight(r['비고'], q)}</div>` : ''}
+    </div>`;
+  }).join('') || '<div class="card empty">해당하는 항목이 없습니다.</div>'}</div>`;
+}
+function findNavConversion() {
+  for (const s of state.defs.sections) for (const g of s.major_conversions || []) for (const m of g.modifications || [])
+    if (/항행구역|항해구역/.test(m.item || '')) return m;
+  return null;
+}
+['#areaSearch', '#onlyDiff', '#showAll'].forEach(s => $(s).addEventListener('input', renderArea));
+
+/* ---------------- Tab 3: 주요개조 정의 ---------------- */
+function initDefs() {
+  $('#defTitle').textContent = state.defs.title || '';
+  renderDefs();
+}
+function renderDefs() {
+  const q = norm($('#defSearch').value).toLowerCase();
+  const h = t => highlight(t, q);
+  const html = state.defs.sections.filter(s => !q || JSON.stringify(s).toLowerCase().includes(q)).map(s => {
+    if (s.major_conversions) {
+      return `<div class="card def"><div class="card-h"><h3>${h(s.category)}</h3></div><div class="card-b">
+        ${s.major_conversions.map(g => `<div class="sub-h">${h(g.type)}</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>개조 내용</th><th>SOLAS 적용</th><th>MARPOL 적용</th></tr></thead>
+          <tbody>${g.modifications.map(m => `<tr>
+            <td style="min-width:160px"><b>${h(m.item || '')}</b>${m.before ? `<div>${h(m.before)} → ${h(m.after)}</div>` : ''}</td>
+            <td>${h(m.solas_application)}</td><td>${h(m.marpol_application)}</td></tr>`).join('')}</tbody></table></div>`).join('')}
+      </div></div>`;
+    }
+    return `<div class="card def"><div class="card-h"><h3>${h(s.regulation)}</h3>${s.description ? `<span class="hint">${h(s.description)}</span>` : ''}</div>
+      <div class="card-b">
+        ${s.content ? `<p>${h(s.content)}</p>` : ''}
+        ${s.items ? `<ol>${s.items.map(x => `<li>${h(x)}</li>`).join('')}</ol>` : ''}
+        ${s.exceptions ? `<div class="sub-h">예외</div><ul class="plain">${s.exceptions.map(x => `<li>${h(x)}</li>`).join('')}</ul>` : ''}
+        ${s.note ? `<div class="note">${h(s.note)}</div>` : ''}
+      </div></div>`;
+  }).join('');
+  $('#defBody').innerHTML = html || '<div class="card empty">검색 결과 없음</div>';
+}
+$('#defSearch').addEventListener('input', renderDefs);
+
+/* ---------------- tabs ---------------- */
+document.querySelector('nav.tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  document.querySelectorAll('nav.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + b.dataset.tab));
+});
+
+loadAll();
+</script>
+</body>
+</html>
